@@ -1,302 +1,250 @@
-    <!doctype html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Login & Painel de Fichas — Firebase</title>
+  <title>Fichas RPG</title>
+
   <style>
-    :root{--bg:#0b0b0f;--card:#0f1115;--accent:#6ee7b7;--muted:#9aa0a6;--text:#e6eef3}
-    *{box-sizing:border-box;font-family:Inter,system-ui,Arial;margin:0}
-    body{background:linear-gradient(180deg,#060607, #0b0b0f);color:var(--text);padding:24px}
-    .center{max-width:1100px;margin:0 auto}
-    .card{background:var(--card);border:1px solid #141416;padding:18px;border-radius:12px;margin-bottom:16px}
-    h1{font-size:1.4rem;margin-bottom:8px}
-    label{font-size:0.85rem;color:var(--muted)}
-    input,textarea,select,button{width:100%;padding:8px;border-radius:8px;background:#07070a;border:1px solid #222;color:var(--text)}
-    .row{display:flex;gap:12px}
-    .col{flex:1}
-    .toolbar{display:flex;justify-content:space-between;align-items:center}
-    .small{padding:6px 10px;width:auto}
-    .list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-    .ficha-card{background:#09090b;border:1px solid #1a1a1c;padding:10px;border-radius:8px}
-    .muted{color:var(--muted)}
-    textarea{min-height:220px;font-family:monospace}
-    .hidden{display:none}
-    .inline{display:flex;gap:8px}
+    body {
+      background:#0b0b0f;
+      color:#e6eef3;
+      font-family:Arial, sans-serif;
+      padding:20px;
+      max-width:800px;
+      margin:auto;
+    }
+
+    input, button {
+      padding:10px;
+      margin:5px 0;
+      width:100%;
+      background:#111;
+      color:white;
+      border:1px solid #333;
+      border-radius:6px;
+    }
+
+    button {
+      cursor:pointer;
+    }
+
+    .section {
+      margin-top:25px;
+      padding:15px;
+      background:#111;
+      border-radius:8px;
+    }
+
+    .ficha-item {
+      display:flex;
+      justify-content:space-between;
+      margin-top:8px;
+      background:#0f0f14;
+      padding:8px;
+      border-radius:6px;
+    }
   </style>
 </head>
 <body>
-  <div class="center">
-    <div id="authCard" class="card">
-      <div class="toolbar">
-        <h1>Entrar / Cadastrar</h1>
-        <div id="userArea" style="display:none">
-          <span id="userEmail" class="muted"></span>
-          <button id="btnLogout" class="small">Sair</button>
-        </div>
-      </div>
 
-      <div id="authForms">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-          <div>
-            <label>Email</label>
-            <input id="inputEmail" type="email" placeholder="you@example.com">
-          </div>
-          <div>
-            <label>Senha</label>
-            <input id="inputPassword" type="password" placeholder="senha">
-          </div>
-        </div>
-        <div style="display:flex;gap:8px;margin-top:12px">
-          <button id="btnLogin" class="small">Entrar</button>
-          <button id="btnSignUp" class="small">Cadastrar</button>
-          <button id="btnResetPass" class="small">Esqueci senha</button>
-        </div>
+<h2>Login</h2>
 
-        <div style="margin-top:12px;color:var(--muted);font-size:0.9rem">Ou use esse painel local como fallback (não recomendado para produção).</div>
-      </div>
+<input id="email" type="email" placeholder="Email">
+<input id="password" type="password" placeholder="Senha">
 
-      <div id="status" class="muted" style="margin-top:8px"></div>
-    </div>
+<button id="btnLogin">Entrar</button>
+<button id="btnSignUp">Cadastrar</button>
+<button id="btnReset">Esqueci senha</button>
+<button id="btnLogout" style="display:none;">Sair</button>
 
-    <div id="dashboard" class="card hidden">
-      <div class="toolbar">
-        <div>
-          <strong>Meu Painel</strong>
-          <div class="muted" id="dashboardSubtitle">Fichas do seu usuário</div>
-        </div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <button id="btnNewFicha" class="small">Nova ficha</button>
-          <button id="btnRefresh" class="small">Atualizar</button>
-        </div>
-      </div>
+<p id="status">Não conectado</p>
 
-      <div style="margin-top:12px;display:flex;gap:12px">
-        <div style="flex:1">
-          <div class="muted">Fichas</div>
-          <div id="fichasList" class="list" style="margin-top:8px"></div>
-        </div>
-        <div style="flex:1">
-          <div class="muted">Editor da ficha (HTML)</div>
-          <div style="margin-top:8px">
-            <input id="fichaTitle" placeholder="Nome da ficha (ex: Kael)">
-            <select id="fichaTemplate" style="margin-top:8px">
-              <option value="">— Escolher template —</option>
-              <option value="basic">Ficha HTML Básica</option>
-            </select>
-            <textarea id="fichaContent" placeholder="Cole o HTML da ficha aqui"></textarea>
-            <div style="display:flex;gap:8px;margin-top:8px">
-              <button id="btnSaveFicha" class="small">Salvar ficha</button>
-              <button id="btnOpenFicha" class="small">Abrir em nova aba</button>
-              <button id="btnExportFicha" class="small">Exportar .html</button>
-            </div>
-            <div id="editorInfo" class="muted" style="margin-top:8px">Dica: você pode colar o HTML da sua ficha (o mesmo que está no canvas).</div>
-          </div>
-        </div>
-      </div>
-    </div>
+<div class="section">
+  <h2>Painel</h2>
+  <button id="btnCreate">CRIAR NOVA FICHA</button>
+  <button id="btnManage">GERENCIAR FICHAS CRIADAS</button>
 
-    <div class="card">
-      <div class="muted">Sobre</div>
-      <div style="margin-top:6px;color:var(--muted);font-size:0.95rem">Sistema de exemplo com <strong>Firebase Auth</strong> + <strong>Firestore</strong>. Substitua <code>firebaseConfig</code> abaixo pelas suas chaves.</div>
-    </div>
+  <div id="fichasArea" style="display:none;">
+    <h3>Minhas Fichas</h3>
+    <div id="fichasList"></div>
   </div>
+</div>
 
-  <!-- Firebase SDKs (modular v9) -->
-  <script type="module">
-    // ------------- CONFIG FIREBASE -------------
-    const firebaseConfig = {
-      apiKey: "AIzaSyBFm18hEqWFW6jgnu4CYp-E9_sL7YeC3wA",
-      authDomain: "fichas-rpg00.firebaseapp.com",
-      projectId: "fichas-rpg00",
-      storageBucket: "fichas-rpg00.firebasestorage.app",
-      messagingSenderId: "569182509691",
-      appId: "1:569182509691:web:13f5d9e242c309b0bda0de"
-    };
-    // ------------------------------------------
+<script type="module">
 
-    // imports modular
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js';
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.6.0/firebase-auth.js';
-    import { getFirestore, collection, doc, setDoc, addDoc, getDocs, query, where, onSnapshot, deleteDoc, getDoc, updateDoc, orderBy } from 'https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js';
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, query, where, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js";
 
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
+/* COLE AQUI SUA CONFIG DO FIREBASE */
+const firebaseConfig = {
+  apiKey: "SUA_API_KEY",
+  authDomain: "SEU_AUTH_DOMAIN",
+  projectId: "SEU_PROJECT_ID",
+  storageBucket: "SEU_BUCKET",
+  messagingSenderId: "SEU_SENDER_ID",
+  appId: "SEU_APP_ID"
+};
 
-    // DOM
-    const inputEmail = document.getElementById('inputEmail');
-    const inputPassword = document.getElementById('inputPassword');
-    const btnLogin = document.getElementById('btnLogin');
-    const btnSignUp = document.getElementById('btnSignUp');
-    const btnResetPass = document.getElementById('btnResetPass');
-    const status = document.getElementById('status');
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
 
-    const authCard = document.getElementById('authCard');
-    const dashboard = document.getElementById('dashboard');
-    const userArea = document.getElementById('userArea');
-    const userEmail = document.getElementById('userEmail');
-    const btnLogout = document.getElementById('btnLogout');
+const email = document.getElementById("email");
+const password = document.getElementById("password");
+const status = document.getElementById("status");
+const btnLogout = document.getElementById("btnLogout");
+const fichasArea = document.getElementById("fichasArea");
+const fichasList = document.getElementById("fichasList");
 
-    const fichasList = document.getElementById('fichasList');
-    const btnNewFicha = document.getElementById('btnNewFicha');
-    const btnRefresh = document.getElementById('btnRefresh');
-    const fichaTitle = document.getElementById('fichaTitle');
-    const fichaContent = document.getElementById('fichaContent');
-    const btnSaveFicha = document.getElementById('btnSaveFicha');
-    const btnOpenFicha = document.getElementById('btnOpenFicha');
-    const btnExportFicha = document.getElementById('btnExportFicha');
-    const fichaTemplate = document.getElementById('fichaTemplate');
+let currentUser = null;
+let unsubscribe = null;
 
-    let currentUser = null;
-    let currentEditingId = null; // id do doc no Firestore
+function setStatus(msg, error=false){
+  status.textContent = msg;
+  status.style.color = error ? "#ff6b6b" : "white";
+}
 
-    // helpers
-    function setStatus(txt, err){ status.textContent = txt || ''; status.style.color = err ? '#ffb4b4' : ''; }
+document.getElementById("btnSignUp").onclick = async () => {
+  try {
+    await createUserWithEmailAndPassword(auth, email.value, password.value);
+  } catch(e){
+    setStatus(e.message, true);
+  }
+};
 
-    btnSignUp.addEventListener('click', async ()=>{
-      const email = inputEmail.value.trim(); const pwd = inputPassword.value;
-      if(!email || !pwd){ setStatus('Email e senha obrigatórios', true); return; }
-      try{
-        const userCredential = await createUserWithEmailAndPassword(auth, email, pwd);
-        setStatus('Conta criada. Logado.');
-      }catch(e){ setStatus('Erro: ' + e.message, true); }
-    });
+document.getElementById("btnLogin").onclick = async () => {
+  try {
+    await signInWithEmailAndPassword(auth, email.value, password.value);
+  } catch(e){
+    setStatus(e.message, true);
+  }
+};
 
-    btnLogin.addEventListener('click', async ()=>{
-      const email = inputEmail.value.trim(); const pwd = inputPassword.value;
-      if(!email || !pwd){ setStatus('Email e senha obrigatórios', true); return; }
-      try{ await signInWithEmailAndPassword(auth, email, pwd); setStatus('Logado.'); }
-      catch(e){ setStatus('Erro: ' + e.message, true); }
-    });
+document.getElementById("btnReset").onclick = async () => {
+  try {
+    await sendPasswordResetEmail(auth, email.value);
+    setStatus("Email enviado");
+  } catch(e){
+    setStatus(e.message, true);
+  }
+};
 
-    btnResetPass.addEventListener('click', async ()=>{
-      const email = inputEmail.value.trim(); if(!email){ setStatus('Coloque o email para reset', true); return; }
-      try{ await sendPasswordResetEmail(auth, email); setStatus('Email de recuperação enviado.'); }
-      catch(e){ setStatus('Erro: ' + e.message, true); }
-    });
+btnLogout.onclick = async () => {
+  await signOut(auth);
+};
 
-    btnLogout.addEventListener('click', async ()=>{ await signOut(auth); setStatus('Desconectado.'); });
+onAuthStateChanged(auth, user => {
+  currentUser = user;
 
-    onAuthStateChanged(auth, async (user)=>{
-      currentUser = user;
-      if(user){
-        authCard.querySelector('#authForms').style.display = 'none';
-        userArea.style.display = 'flex';
-        userEmail.textContent = user.email;
-        dashboard.classList.remove('hidden');
-        authCard.querySelector('#status').textContent = '';
-        loadUserFichas();
-      } else {
-        authCard.querySelector('#authForms').style.display = 'block';
-        userArea.style.display = 'none';
-        userEmail.textContent = '';
-        dashboard.classList.add('hidden');
-        fichasList.innerHTML = '';
-        fichaTitle.value = '';
-        fichaContent.value = '';
-      }
-    });
+  if(user){
+    setStatus("Conectado como " + user.email);
+    btnLogout.style.display = "block";
+  } else {
+    setStatus("Não conectado");
+    btnLogout.style.display = "none";
+    fichasArea.style.display = "none";
+    if(unsubscribe) unsubscribe();
+  }
+});
 
-    // Templates
-    const templates = {
-      'basic': `<!doctype html>\n<html><head><meta charset=\"utf-8\"><title>Ficha</title><style>body{font-family:system-ui;background:#0b0b0f;color:#e6eef3;padding:18px}</style></head><body><h1 id=\"nome\">Nome do Personagem</h1><div id=\"content\">Cole aqui a ficha HTML</div></body></html>`
-    };
+/* GARANTE CAMPO DE ANOTAÇÕES */
+function ensureNotes(html){
+  if(html.includes('id="notas"')) return html;
+  return html.replace("</body>", `
+    <div style="margin-top:20px;">
+      <h3>Anotações</h3>
+      <textarea id="notas" style="width:100%;height:200px;"></textarea>
+    </div>
+  </body>`);
+}
 
-    fichaTemplate.addEventListener('change', ()=>{
-      const t = fichaTemplate.value; if(t && templates[t]) fichaContent.value = templates[t];
-    });
+/* CRIAR NOVA FICHA */
+document.getElementById("btnCreate").onclick = async () => {
+  if(!currentUser){
+    alert("Faça login primeiro");
+    return;
+  }
 
-    // Firestore: CRUD
-    async function loadUserFichas(){
-      if(!currentUser) return;
-      fichasList.innerHTML = '<div class="muted">Carregando...</div>';
-      const q = query(collection(db, 'fichas'), where('owner','==', currentUser.uid), orderBy('createdAt'));
-      // snapshot realtime
-      onSnapshot(q, (snap)=>{
-        fichasList.innerHTML = '';
-        if(snap.empty) fichasList.innerHTML = '<div class="muted">Nenhuma ficha.</div>';
-        snap.forEach(docu=>{
-          const data = docu.data();
-          const el = document.createElement('div'); el.className='ficha-card';
-          el.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center"><strong>${escapeHtml(data.title||'Sem título')}</strong><div class=\"inline\"> <button data-id=\"${docu.id}\" class=\"openBtn small\">Abrir</button> <button data-id=\"${docu.id}\" class=\"editBtn small\">Editar</button> <button data-id=\"${docu.id}\" class=\"delBtn small\">Apagar</button></div></div><div class=\"muted\">${escapeHtml(data.createdBy||'')}</div>`;
-          fichasList.appendChild(el);
-        });
-        attachFichaListHandlers();
-      }, (err)=>{ fichasList.innerHTML = '<div class="muted">Erro ao carregar</div>'; console.error(err); });
+  let html = "";
+
+  try {
+    const res = await fetch("/ficha_base.html");
+    if(res.ok){
+      html = await res.text();
     }
+  } catch(e){}
 
-    function attachFichaListHandlers(){
-      Array.from(document.querySelectorAll('.openBtn')).forEach(b=>{ b.onclick = async ()=>{ openFichaInNewTab(b.dataset.id); }; });
-      Array.from(document.querySelectorAll('.editBtn')).forEach(b=>{ b.onclick = async ()=>{ loadFichaToEditor(b.dataset.id); }; });
-      Array.from(document.querySelectorAll('.delBtn')).forEach(b=>{ b.onclick = async ()=>{ if(confirm('Apagar essa ficha?')){ await deleteDoc(doc(db,'fichas',b.dataset.id)); } }; });
-    }
+  if(!html){
+    html = `
+    <!doctype html>
+    <html>
+    <head><meta charset="utf-8"><title>Nova Ficha</title></head>
+    <body>
+      <h1>Nova Ficha</h1>
+      <p>Conteúdo base</p>
+    </body>
+    </html>`;
+  }
 
-    async function loadFichaToEditor(id){
-      const docRef = doc(db,'fichas', id);
-      const snapshot = await getDoc(docRef);
-      if(!snapshot.exists()) return alert('Ficha não encontrada');
-      const data = snapshot.data();
-      currentEditingId = id;
-      fichaTitle.value = data.title || '';
-      fichaContent.value = data.html || '';
-      setStatus('Ficha carregada no editor');
-    }
+  html = ensureNotes(html);
 
-    async function openFichaInNewTab(id){
-      const docRef = doc(db,'fichas', id);
-      const snapshot = await getDoc(docRef);
-      if(!snapshot.exists()) return alert('Ficha não encontrada');
-      const data = snapshot.data();
-      const html = data.html || '<!doctype html><html><body>Ficha vazia</body></html>';
-      const blob = new Blob([html], {type:'text/html'});
-      const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
-      setTimeout(()=>URL.revokeObjectURL(url), 1000*60);
-    }
+  await addDoc(collection(db,"fichas"),{
+    owner: currentUser.uid,
+    html: html,
+    createdAt: new Date().toISOString()
+  });
 
-    async function exportFichaAsFile(){
-      const html = fichaContent.value || '';
-      const title = (fichaTitle.value || 'ficha').replace(/[^a-z0-9-_\.]/ig,'_');
-      const blob = new Blob([html], {type:'text/html'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = title + '.html'; a.click(); URL.revokeObjectURL(a.href);
-    }
+  const blob = new Blob([html],{type:"text/html"});
+  const url = URL.createObjectURL(blob);
+  window.open(url,"_blank");
+};
 
-    btnExportFicha.addEventListener('click', exportFichaAsFile);
+/* GERENCIAR FICHAS */
+document.getElementById("btnManage").onclick = () => {
 
-    btnOpenFicha.addEventListener('click', ()=>{
-      const html = fichaContent.value || '<!doctype html><html><body>Ficha vazia</body></html>';
-      const blob = new Blob([html], {type:'text/html'});
-      const url = URL.createObjectURL(blob);
-      window.open(url, '_blank');
-      setTimeout(()=>URL.revokeObjectURL(url), 1000*60);
-    });
+  if(!currentUser){
+    alert("Faça login primeiro");
+    return;
+  }
 
-    btnNewFicha.addEventListener('click', ()=>{
-      currentEditingId = null; fichaTitle.value = 'Nova ficha'; fichaContent.value = templates['basic'];
-    });
+  fichasArea.style.display = "block";
 
-    btnRefresh.addEventListener('click', ()=>{ loadUserFichas(); setStatus('Atualizado.'); setTimeout(()=>setStatus(''),2000); });
+  const q = query(collection(db,"fichas"), where("owner","==",currentUser.uid));
 
-    btnSaveFicha.addEventListener('click', async ()=>{
-      if(!currentUser) return alert('Faça login');
-      const title = fichaTitle.value || 'Sem título';
-      const html = fichaContent.value || '';
-      try{
-        if(currentEditingId){
-          const ref = doc(db,'fichas', currentEditingId);
-          await updateDoc(ref, { title, html, updatedAt: new Date().toISOString() });
-          setStatus('Ficha atualizada');
-        } else {
-          await addDoc(collection(db,'fichas'), { title, html, owner: currentUser.uid, createdBy: currentUser.email, createdAt: new Date().toISOString() });
-          setStatus('Ficha criada');
+  unsubscribe = onSnapshot(q, snap => {
+    fichasList.innerHTML = "";
+
+    snap.forEach(docu => {
+      const data = docu.data();
+
+      const div = document.createElement("div");
+      div.className = "ficha-item";
+
+      const openBtn = document.createElement("button");
+      openBtn.textContent = "Abrir";
+      openBtn.onclick = () => {
+        const blob = new Blob([data.html],{type:"text/html"});
+        const url = URL.createObjectURL(blob);
+        window.open(url,"_blank");
+      };
+
+      const delBtn = document.createElement("button");
+      delBtn.textContent = "Apagar";
+      delBtn.onclick = async () => {
+        if(confirm("Apagar ficha?")){
+          await deleteDoc(doc(db,"fichas",docu.id));
         }
-      }catch(e){ setStatus('Erro ao salvar: '+e.message, true); }
+      };
+
+      div.appendChild(openBtn);
+      div.appendChild(delBtn);
+      fichasList.appendChild(div);
     });
+  });
+};
 
-    // helper escape
-    function escapeHtml(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-  </script>
+</script>
 </body>
 </html>

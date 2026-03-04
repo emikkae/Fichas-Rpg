@@ -1,0 +1,1173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ficha de Personagem</title>
+  <style>
+    :root {
+      --bg: #000000;
+      --card: #0d0d0d;
+      --text: #f2f2f2;
+      --muted: #aaaaaa;
+      --border: #1f1f1f;
+      --accent: #3a3a3a;
+    }
+    * { box-sizing: border-box; font-family: system-ui, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); padding: 16px; }
+    h1, h2 { margin-bottom: 8px; border-bottom: 1px solid var(--border); padding-bottom: 4px; }
+    .container { max-width: 1000px; margin: auto; display: grid; gap: 16px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 8px; }
+    label { font-size: 0.75rem; color: var(--muted); }
+    input, textarea, select, button { width: 100%; background: #000; border: 1px solid var(--border); color: var(--text); padding: 6px; border-radius: 6px; }
+    button { cursor: pointer; }
+    textarea { min-height: 60px; resize: vertical; }
+    .inline { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: end; }
+    .slots { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .slot { background: #000; border: 1px solid var(--border); border-radius: 8px; padding: 6px; display:grid; gap:6px; }
+    .slot label { display:block; text-align:center; margin-bottom:4px; }
+    #arquetipoBox { display:none; }
+    #vocacaoParanormalBox { display:none; }
+    #vocacaoHabilidades { display:none; white-space: pre-wrap; line-height: 1.4; padding:12px; max-height: 420px; overflow:auto; }
+    .status-wrapper { display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:12px; }
+    .status-box { display:grid; grid-template-columns: 1fr 1fr; gap:8px; padding:10px; border:1px solid var(--border); border-radius:12px; background:#000; }
+    .status-box strong { grid-column: span 2; text-align:center; font-size:1rem; }
+    .skills { display:grid; grid-template-columns: 1.5fr 1fr 1fr; gap:6px; align-items:center; }
+    .skills-header { font-size:0.75rem; color:var(--muted); }
+    .roll-btn { width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+    #diceModal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 999; }
+    #diceModal .modal-content{ background:#000; border:1px solid var(--border); border-radius:12px; padding:16px; max-width:90%; }
+    #diceResults{ display:flex; flex-wrap:wrap; gap:6px; margin:8px 0; }
+    .die{ border:1px solid var(--border); border-radius:6px; padding:6px 8px; background:#111; }
+    #itemModal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; }
+    #itemModal .modal-content { background:#000; border:1px solid var(--border); border-radius:12px; padding:16px; max-width:90%; width:420px; display:grid; gap:6px; }
+    #choiceModal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1010; }
+    #choiceModal .modal-content { background:#000; border:1px solid var(--border); border-radius:12px; padding:16px; width:420px; display:grid; gap:8px; max-height:90vh; overflow:auto; }
+    #choicesPanel { background:#050505; border:1px solid var(--border); border-radius:10px; padding:8px; color:var(--muted); display:none; max-height:300px; overflow:auto; font-family:monospace; font-size:0.9rem; }
+    .toolbar { display:flex; gap:8px; justify-content:space-between; align-items:center; }
+    .toolbar-right { display:flex; gap:8px; align-items:center; }
+    .small { padding:6px 8px; width:auto; }
+    .muted-small { color:var(--muted); font-size:0.85rem; }
+    .hint { font-size:0.8rem; color:var(--muted); }
+    .choice-row { border-bottom:1px dashed #222; padding:6px 0; }
+    .choice-label { color:#ddd; font-weight:600; }
+    .choice-val { color:var(--muted); margin-left:6px; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="card">
+    <div class="toolbar">
+      <div class="toolbar-right">
+        <label class="muted-small"><input type="checkbox" id="autoCalc" checked> Auto calcular status</label>
+        <button id="btnResetManual" class="small">Reset manuais</button>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button id="toggleChoicesBtn" class="small">Mostrar escolhas</button>
+      </div>
+      <div class="toolbar-right">
+        <button id="btnSave" class="small">Salvar (local)</button>
+        <button id="btnExport" class="small">Exportar JSON</button>
+        <button id="btnImport" class="small">Importar JSON</button>
+      </div>
+    </div>
+    <h1>Características Base</h1>
+    <div class="grid">
+      <div><label for="nome">Nome</label><input id="nome" placeholder="Nome do personagem"></div>
+      <div><label for="idade">Idade</label><input id="idade" placeholder="Idade"></div>
+      <div><label for="altura">Altura</label><input id="altura" placeholder="Altura"></div>
+      <div><label for="genero">Gênero</label><input id="genero" placeholder="Gênero"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Especialização</h2>
+    <div class="grid">
+      <div>
+        <label for="treinamento">Nível de Treinamento</label>
+        <select id="treinamento">
+          <option>Mundano 1</option><option>Mundano 2</option><option>Mundano 3</option><option>Mundano 4</option><option>Mundano 5</option>
+          <option>Nível 1</option><option>Nível 2</option><option>Nível 3</option><option>Nível 4</option><option>Nível 5</option><option>Nível 6</option><option>Nível 7</option><option>Nível 8</option><option>Nível 9</option><option>Nível 10</option><option>Nível 11</option><option>Nível 12</option><option>Nível 13</option>
+        </select>
+      </div>
+      <div>
+        <label for="conexao">Conexão</label>
+        <select id="conexao">
+          <option>0%</option><option>5%</option><option>10%</option><option>15%</option><option>20%</option><option>25%</option><option>30%</option><option>35%</option><option>40%</option><option>45%</option><option>50%</option>
+        </select>
+      </div>
+      <div id="arquetipoBox">
+        <label for="arquetipo">Arquétipo</label>
+        <select id="arquetipo"><option value="combatente">combatente</option><option value="eloquente">eloquente</option><option value="ritualista">ritualista</option></select>
+      </div>
+      <div>
+        <label for="vocacaoBase">Vocação</label>
+        <select id="vocacaoBase">
+          <option>Executor</option><option>Pugilista</option><option>Atirador</option><option>Comandante</option><option>Infiltrador</option><option>Socorrista</option><option>Especialista</option><option>Engenhoso</option><option>Autoritário</option><option>Vetorial</option><option>Grimorista</option><option>Atado</option><option>Regressado</option><option>Predador</option><option>Colosso</option>
+        </select>
+      </div>
+      <div id="vocacaoParanormalBox">
+        <label for="vocacaoParanormal">Vocação Paranormal</label>
+        <select id="vocacaoParanormal"></select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Status</h2>
+    <div class="status-wrapper">
+      <div class="status-box"><strong>PV</strong><div><label for="pvAtual">Atual</label><input type="number" id="pvAtual"></div><div><label for="pvMax">Máx</label><input type="number" id="pvMax" data-auto="true"></div></div>
+      <div class="status-box"><strong>PE</strong><div><label for="peAtual">Atual</label><input type="number" id="peAtual"></div><div><label for="peMax">Máx</label><input type="number" id="peMax" data-auto="true"></div></div>
+      <div class="status-box"><strong>PH</strong><div><label for="phAtual">Atual</label><input type="number" id="phAtual"></div><div><label for="phMax">Máx</label><input type="number" id="phMax" data-auto="true"></div></div>
+    </div>
+    <br>
+    <div class="grid">
+      <div><label for="defesa">Defesa Base</label><input id="defesa" data-auto="true"></div><div><label for="esquiva">Esquiva</label><input id="esquiva" data-auto="true"></div><div><label for="contra">Contra-Ataque</label><input id="contra" data-auto="true"></div><div><label for="bloqueio">Bloqueio</label><input id="bloqueio" data-auto="true"></div>
+    </div>
+    <br>
+    <div class="grid">
+      <div><label for="reacoes">Reações</label><input id="reacoes"></div><div><label for="limitePE">Limite de PE</label><input id="limitePE" data-auto="true"></div><div><label for="dtBase">DT Base</label><input id="dtBase" data-auto="true"></div>
+    </div>
+    <div class="hint">DT = 10 + Limite de PE + Presença</div>
+  </div>
+
+  <div class="card">
+    <h2>Atributos</h2>
+    <div class="grid">
+      <div class="inline"><div><label for="forca">Força</label><select id="forca"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div><button class="roll-btn" data-name="Força" data-select="forca">🎲</button></div>
+      <div class="inline"><div><label for="agilidade">Agilidade</label><select id="agilidade"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div><button class="roll-btn" data-name="Agilidade" data-select="agilidade">🎲</button></div>
+      <div class="inline"><div><label for="intelecto">Intelecto</label><select id="intelecto"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div><button class="roll-btn" data-name="Intelecto" data-select="intelecto">🎲</button></div>
+      <div class="inline"><div><label for="presenca">Presença</label><select id="presenca"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div><button class="roll-btn" data-name="Presença" data-select="presenca">🎲</button></div>
+      <div class="inline"><div><label for="vigor">Vigor</label><select id="vigor"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></div><button class="roll-btn" data-name="Vigor" data-select="vigor">🎲</button></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Perícias</h2>
+    <div class="skills skills-header"><div>Perícia</div><div>Bônus Comum</div><div>Bônus Paranormal</div></div>
+    <div class="skills"><div>Atletismo</div><input type="number" id="p_atletismo"><input type="number" id="p_atletismo_par"></div>
+    <div class="skills"><div>Luta</div><input type="number" id="p_luta"><input type="number" id="p_luta_par"></div>
+    <div class="skills"><div>Mobilidade</div><input type="number" id="p_mobilidade"><input type="number" id="p_mobilidade_par"></div>
+    <div class="skills"><div>Infiltração</div><input type="number" id="p_infiltracao"><input type="number" id="p_infiltracao_par"></div>
+    <div class="skills"><div>Pontaria</div><input type="number" id="p_pontaria"><input type="number" id="p_pontaria_par"></div>
+    <div class="skills"><div>Reflexos</div><input type="number" id="p_reflexos"><input type="number" id="p_reflexos_par"></div>
+    <div class="skills"><div>Iniciativa</div><input type="number" id="p_iniciativa"><input type="number" id="p_iniciativa_par"></div>
+    <div class="skills"><div>Integridade</div><input type="number" id="p_integridade"><input type="number" id="p_integridade_par"></div>
+    <div class="skills"><div>Fortitude</div><input type="number" id="p_fortitude"><input type="number" id="p_fortitude_par"></div>
+    <div class="skills"><div>Conhecimento</div><input type="number" id="p_conhecimento"><input type="number" id="p_conhecimento_par"></div>
+    <div class="skills"><div>Investigação</div><input type="number" id="p_investigacao"><input type="number" id="p_investigacao_par"></div>
+    <div class="skills"><div>Análise</div><input type="number" id="p_analise"><input type="number" id="p_analise_par"></div>
+    <div class="skills"><div>Tecnologia</div><input type="number" id="p_tecnologia"><input type="number" id="p_tecnologia_par"></div>
+    <div class="skills"><div>Medicina</div><input type="number" id="p_medicina"><input type="number" id="p_medicina_par"></div>
+    <div class="skills"><div>Ocultismo</div><input type="number" id="p_ocultismo"><input type="number" id="p_ocultismo_par"></div>
+    <div class="skills"><div>Tática</div><input type="number" id="p_tatica"><input type="number" id="p_tatica_par"></div>
+    <div class="skills"><div>Ritualística</div><input type="number" id="p_ritualistica"><input type="number" id="p_ritualistica_par"></div>
+    <div class="skills"><div>Sobrevivência</div><input type="number" id="p_sobrevivencia"><input type="number" id="p_sobrevivencia_par"></div>
+    <div class="skills"><div>Intimidação</div><input type="number" id="p_intimidacao"><input type="number" id="p_intimidacao_par"></div>
+    <div class="skills"><div>Diplomacia</div><input type="number" id="p_diplomacia"><input type="number" id="p_diplomacia_par"></div>
+    <div class="skills"><div>Enganação</div><input type="number" id="p_enganacao"><input type="number" id="p_enganacao_par"></div>
+    <div class="skills"><div>Intuição</div><input type="number" id="p_intuicao"><input type="number" id="p_intuicao_par"></div>
+    <div class="skills"><div>Vontade</div><input type="number" id="p_vontade"><input type="number" id="p_vontade_par"></div>
+    <div class="skills"><div>Percepção</div><input type="number" id="p_percepcao"><input type="number" id="p_percepcao_par"></div>
+    <div class="skills"><div>Identidade</div><input type="number" id="p_identidade"><input type="number" id="p_identidade_par"></div>
+    <div class="skills"><div>Domínio</div><input type="number" id="p_dominio"><input type="number" id="p_dominio_par"></div>
+  </div>
+
+  <div class="card">
+    <h2>inventário</h2>
+    <div class="slots">
+      <div class="slot"><label for="slot1">Slot 1</label><input id="slot1"><button onclick="abrirItem(1)">Abrir</button></div>
+      <div class="slot"><label for="slot2">Slot 2</label><input id="slot2"><button onclick="abrirItem(2)">Abrir</button></div>
+      <div class="slot"><label for="slot3">Slot 3</label><input id="slot3"><button onclick="abrirItem(3)">Abrir</button></div>
+      <div class="slot"><label for="slot4">Slot 4</label><input id="slot4"><button onclick="abrirItem(4)">Abrir</button></div>
+      <div class="slot"><label for="slot5">Slot 5</label><input id="slot5"><button onclick="abrirItem(5)">Abrir</button></div>
+      <div class="slot"><label for="slot6">Slot 6</label><input id="slot6"><button onclick="abrirItem(6)">Abrir</button></div>
+      <div class="slot"><label for="slot7">Slot 7</label><input id="slot7"><button onclick="abrirItem(7)">Abrir</button></div>
+      <div class="slot"><label for="slot8">Slot 8</label><input id="slot8"><button onclick="abrirItem(8)">Abrir</button></div>
+    </div>
+  </div>
+
+  <div id="choicesPanel" class="card">
+    <strong>Escolhas / Rolagens de Nível (armazenadas)</strong>
+    <div id="choicesContent" style="margin-top:8px;">Nenhuma escolha armazenada.</div>
+    <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end;">
+      <button id="btnClearChoices" class="small">Limpar escolhas</button>
+      <button id="btnExportChoices" class="small">Exportar escolhas</button>
+    </div>
+  </div>
+
+  <div class="card" id="vocacaoHabilidades">
+EXECUTOR
+Você foi moldado para eliminar alvos com precisão e eficiência absoluta.
+O combate não é caos para você, é método, repetição e domínio técnico.
+Cada arma que empunha se torna uma  extensão do seu corpo e da sua intenção.
+Você estuda impactos, ângulos e oportunidades como outros estudam mapas ou livros.
+Onde você luta, o confronto termina rápido, e raramente do mesmo jeito que começou.
+
+HABILIDADE INICIAL | Filhotismo |
+Acostumado com um tipo de cenário, você se consolidou como um exímio usuário de um tipo de arma em específico.
+Escolha um tipo de dano físico, quando estiver empunhando uma arma que cause aquele tipo de dano, você pode gastar 2 PE pra adicionar +1D de dano.
+
+HABILIDADES AVANÇADAS |
+Escolha uma dessas sempre que tiver acesso a uma nova habilidade dessa vocação.
+
+| Técnica Secreta |
+Uma vez por rodada, Quando causar dano do tipo de dano escolhido, gastando 2 PE escolha um dos efeitos a seguir:
+
+□ Massacre – o golpe atinge um ser adjacente ao alvo do ataque.
+
+□ Receba – quando realiza um golpe a distância, pode realizar uma ação de investida. (realizando um ataque corpo-a-corpo)
+
+□ Espancar – ao acertar um golpe corpo-a-corpo pode realizar um ataque adicional ao mesmo alvo.
+
+| Demonstração De Força |
+No primeiro golpe seu na rodada Você recebe +1D em testes de ataque com arma do tipo de dano escolhido e uma vez por rodada caso tire 20 no acerto você ignora a R.D do alvo naquele golpe.
+
+| Máquina De Matar |
+Quando contra-atacar empunhando uma arma de seu tipo de dano você aumenta sua defesa em 5 além do comum, quando tira o dano maximo em um dos dados na rolagem de dano ganha +1D adicional, o bônus não acumula, e caso tire um crítico ganha esse bônus automaticamente.
+  </div>
+
+</div>
+
+<div id="diceModal"><div class="modal-content"><strong id="diceTitle"></strong><div id="diceResults"></div><div><strong>Total:</strong> <span id="diceTotal"></span></div><br><button onclick="fecharModal()">Fechar</button></div></div>
+
+<div id="itemModal"><div class="modal-content"><label>Nome</label><input id="itemNome"><label>Tipo</label><input id="itemTipo"><label>Dano</label><input id="itemDano"><label>Descrição</label><textarea id="itemDescricao"></textarea><div style="display:flex;gap:8px;"><button id="btnSaveItem">Salvar Item</button><button onclick="fecharItem()">Fechar</button></div></div></div>
+
+<div id="choiceModal"><div class="modal-content"><strong id="choiceTitle"></strong><div id="choiceBody"></div><div style="display:flex;gap:8px;justify-content:flex-end;"><button id="choiceConfirm">Confirmar</button></div></div></div>
+
+<script>
+function rolarD4(){ return Math.floor(Math.random()*4)+1; }
+function rolarD6(){ return Math.floor(Math.random()*6)+1; }
+function rolarD20(){ return Math.floor(Math.random()*20)+1; }
+
+let slotAtual = null;
+
+function abrirItem(n){
+  slotAtual = n;
+  const dados = JSON.parse(localStorage.getItem('equipamento_slot_' + n) || '{}');
+  document.getElementById('itemNome').value = dados.nome || '';
+  document.getElementById('itemTipo').value = dados.tipo || '';
+  document.getElementById('itemDano').value = dados.dano || '';
+  document.getElementById('itemDescricao').value = dados.descricao || '';
+  document.getElementById('itemModal').style.display = 'flex';
+}
+
+function fecharItem(){
+  document.getElementById('itemModal').style.display = 'none';
+}
+
+document.getElementById('btnSaveItem').addEventListener('click', ()=>{
+  const dados = {
+    nome: document.getElementById('itemNome').value,
+    tipo: document.getElementById('itemTipo').value,
+    dano: document.getElementById('itemDano').value,
+    descricao: document.getElementById('itemDescricao').value
+  };
+  localStorage.setItem('equipamento_slot_' + slotAtual, JSON.stringify(dados));
+  const campo = document.getElementById('slot' + slotAtual);
+  if(campo){ campo.value = dados.nome; }
+  document.getElementById('itemModal').style.display = 'none';
+});
+
+/* storage helpers (training choices) */
+function getStoredChoice(){
+  try{
+    return JSON.parse(localStorage.getItem('training_choice') || 'null') || {};
+  }catch(e){ return {}; }
+}
+function storeChoice(obj){
+  localStorage.setItem('training_choice', JSON.stringify(obj || {}));
+  updateChoicesPanel();
+}
+function resetTrainingChoices(){
+  localStorage.removeItem('training_choice');
+  updateChoicesPanel();
+}
+
+/* ---------- Vocations (kept full) ---------- */
+const vocacoesText = {
+  "Executor": `EXECUTOR
+Você foi moldado para eliminar alvos com precisão e eficiência absoluta.
+O combate não é caos para você, é método, repetição e domínio técnico.
+Cada arma que empunha se torna uma  extensão do seu corpo e da sua intenção.
+Você estuda impactos, ângulos e oportunidades como outros estudam mapas ou livros.
+Onde você luta, o confronto termina rápido, e raramente do mesmo jeito que começou.
+
+HABILIDADE INICIAL | Filhotismo |
+Acostumado com um tipo de cenário, você se consolidou como um exímio usuário de um tipo de arma em específico.
+Escolha um tipo de dano físico, quando estiver empunhando uma arma que cause aquele tipo de dano, você pode gastar 2 PE pra adicionar +1D de dano.
+
+HABILIDADES AVANÇADAS |
+Escolha uma dessas sempre que tiver acesso a uma nova habilidade dessa vocação.
+
+| Técnica Secreta |
+Uma vez por rodada, Quando causar dano do tipo de dano escolhido, gastando 2 PE escolha um dos efeitos a seguir:
+
+□ Massacre – o golpe atinge um ser adjacente ao alvo do ataque.
+
+□ Receba – quando realiza um golpe a distância, pode realizar uma ação de investida. (realizando um ataque corpo-a-corpo)
+
+□ Espancar – ao acertar um golpe corpo-a-corpo pode realizar um ataque adicional ao mesmo alvo.
+
+| Demonstração De Força |
+No primeiro golpe seu na rodada Você recebe +1D em testes de ataque com arma do tipo de dano escolhido e uma vez por rodada caso tire 20 no acerto você ignora a R.D do alvo naquele golpe.
+
+| Máquina De Matar |
+Quando contra-atacar empunhando uma arma de seu tipo de dano você aumenta sua defesa em 5 além do comum, quando tira o dano maximo em um dos dados na rolagem de dano ganha +1D adicional, o bônus não acumula, e caso tire um crítico ganha esse bônus automaticamente.`,
+
+  "Pugilista": `PUGILISTA
+Seu corpo foi moldado para o confronto direto.
+Você luta de perto, absorve impactos e devolve golpes com precisão letal.
+Cada movimento é técnico, cada ataque tem propósito.
+Derrubar, empurrar ou finalizar faz parte do mesmo fluxo de combate, Quando você entra em alcance, poucos conseguem se manter de pé.
+
+|HABILIDADE INICIAL | Memória Muscular |
+Sua reação de contra ataque não é consumida quando a usa e sim quando você for acertado, e você soma agilidade a defesa contra-atacando.
+
+HABILIDADES AVANÇADAS |
+Escolha uma dessas sempre que tiver acesso a uma nova habilidade dessa vocação.
+
+| Segura o Grosso |
+Quando receber um golpe e bloquear (sem sofrer ferida letal), tem direito a contra-atacar o alvo que realizou o ataque, além disso soma +1D em seu dano desarmado.
+
+| Aplicação Da Luta |
+Uma vez por rodada Quando acerta um ataque corpo a corpo, você pode gastar 2 PE para realizar uma manobra de Derrubar ou Empurrar contra o alvo como ação livre.
+
+• Se escolher Empurrar, recebe +5 para cada 10 pontos de dano causados.
+
+• Se escolher Derrubar e vencer no teste oposto, pode gastar uma reação para fazer um ataque adicional contra o alvo caído.
+
+| costume em combate |
+Você recebe +1 PV por nível, +1 no passo de dano desarmado e recebe o dobro de benefícios por flanquear ou cercar um alvo.`,
+
+  "Comandante": `COMANDANTE
+Você não vence batalhas pela força do golpe, mas pela força da decisão.
+Enquanto outros reagem, você antecipa, coordena e abre caminhos, Sua presença organiza o caos, transforma indivíduos em unidade e erros em oportunidades.
+Cada ordem sua move o campo de batalha, cada brecha explorada encurta o conflito.
+Sem você é uma briga com você, é estratégia.
+
+HABILIDADE INICIAL | Análise de campo |
+Sempre que iniciar seu turno você tem direito a um teste de tática pra realizar uma ação da perícia como ação livre pra analisar o campo e as situações do combate gastando 1 PE.
+
+HABILIDADES AVANÇADAS |
+Escolha uma dessas sempre que tiver acesso a uma nova habilidade dessa vocação.
+
+| Comando de Combate |
+Quando um aliado falhar em um teste em alcance curto, você pode gastar uma reação pra adicionar +1D ao teste dele indicando brechas na guarda do oponente.
+Quando um aliado acertar um golpe sobre efeito disso, você pode usar a habilidade de Tática "Brecha na guarda" como ação livre gastando 2 PE.
+
+| Do Francês, Stratégie! |
+Você recebe +1 no limite pra preparação de ações de apoio, e pode fazer um teste de tática DT 20+5 por nível da ação pra diminuir a preparação da ação de apoio pra determinada ação.
+E agora pode direcionar um alvo em alcance curto com suas próprias ações de apoio, gastando sua ação pra que o mesmo esteja pronto.
+
+| General De Elite |
+Quando acompanhado por uma equipe ds aliados, você recebe os seguintes benefícios:
++2 P.V temporários (por aliado) | limite 2+intelecto |
++2 na DEFESA (por aliado) | limite 2+intelecto |
++1 reação defensiva
+Os bônus não diminuem caso seus aliados caiam, narrativamente significam o fato de eles estarem alí, coordenados por você, mas pra cada aliado morto você perde 2 de HUMANIDADE.`,
+
+  "Predador": `PREDADOR
+Você não espera o combate começar, você já está em movimento.
+Seus instintos são afiados para antecipar ameaças, tomar a iniciativa e manter a pressão constante, com cálculo e ataque empurra o inimigo para trás, assim quando a luta começa, você já está no controle do ritmo.
+Afinal, você não hesita, Quem hesita vira presa.
+
+HABILIDADE INICIAL | Olhos de Caçador |
+Você recebe treinamento em percepção, intuição e iniciativa.
+E quando realiza o teste de iniciativa de +1D.
+
+HABILIDADES AVANÇADAS |
+Escolha uma dessas sempre que tiver acesso a uma nova habilidade dessa vocação.
+
+| Sede de Sangue |
+Você recebe a habilidade "Rastreador" da origem de caçador.
+caso já tenha a habilidade você recebe treinamento em pontaria, sobrevivência e infiltração.
+
+| Faca AK-47 |
+Quando acerta um golpe pode gastar 2 PE pra dar um acerto adicional no mesmo.
+Sempre que realiza um acerto critico, você diminui em 1+agilidade a iniciativa do alvo acertado (limite metade do nível)
+
+| "Odeio Gente Barulhenta" |
+Você recebe +1D em testes de infiltração pra se esconder e perceber possiveis ameaças.
+E quando tem a iniciativa maior que a de um alvo, você tem +1 Reação em relação ao mesmo (caso a diferença seja de 10 ou mais pontos você tem 2).`,
+
+  "Colosso": `COLOSSO
+Você foi moldado para aguentar o que quebraria qualquer outro.
+Seu corpo é trincheira, seu posicionamento é proteção, e sua presença impede que o pior alcance quem está atrás de você.
+Você não vence pela velocidade nem pela técnica refinada, mas pela recusa absoluta em cair.
+Quando o perigo avança, você é quem permanece de pé.
+Se alguém precisa segurar a linha, é você.
+
+HABILIDADE INICIAL | Sem Medo, Sem Dor |
+Você tem +1D Pra testes de resistência mentais e físicos.
+
+HABILIDADES AVANÇADAS |
+Escolha uma dessas sempre que tiver acesso a uma nova habilidade dessa vocação.
+
+| Bate na massa |
+Você tem +1D pra realizar ações da pericia fortitude e ganha seu vigor em R.D a dano de impacto, corte, balístico e perfurante = vigor (escala a cada 5 níveis)
+
+| "Aqui é absurdo." |
+Você tem +1 rodada morrendo (independente de ferida letal) 
+E toda vez que receber um dano pode optar por gastar duas reações pra ao invés de reagir defensivamente realizar uma manobra contra o atacante, caso gaste 2 PE você recebe +1D no teste.
+
+| Duro de Matar |
+Você recebe a habilidade "sobrevivência urbana" de Indigente, caso já tenha recebe 1d3 P.V ao invés de 1 por nível.
+E quando fica machucado (metade dos P.V maximos) recebe +5 na DEFESA e 1d6 = vigor em PV's temporários.`,
+
+  "Atirador": `ATIRADOR
+Você transforma qualquer arma de fogo em uma extensão da sua vontade, cálculo, previsão, cada impacto tem intenção.
+Não importa a distância, seja no meio do caos do combate ou na precisão absoluta a distância, você domina o ritmo do combate pelo gatilho.
+Cad movimento seu pode determinar se aquele foi o ultimo do seu alvo.
+
+HABILIDADE INICIAL | Eficiência Tática |
+Escolha um tipo de arma de fogo específico (pistolas, escopetas, rifles de assalto ou de precisão) quando estiver empunhando uma arma desse tipo você pode gastar 2PE pra receber +1D no dano ou acerto.
+
+HABILIDADE AVANÇADAS |
+Escolha uma dessas sempre que tiver acesso a uma nova habilidade dessa vocação.
+
+| Multa em Bala |
+Quando bloquear com a arma empunhada, você soma +2 de R.D durante o bloqueio.
+Você pode contra-atacar usando a arma de fogo, e quando faz isso soma agilidade e intelecto na sua defesa ao invés de força.
+
+| Precisão Assombrosa |
+Você pode atingir partes específicas de um corpo de um alvo (como equipamentos) sem desvantagem alguma gastando 1 PE.
+E quando realiza a ação mirar recebe os benefícios de eficiência tática pra o acerto naturalmente (podendo gastar 2 PE pra adicionar ao dano também.)
+
+| ONE SHOT, ONE KILL |
+Quando realiza um golpe crítico você ganha +5 pontos na soma total do dano.
+E quando realiza um golpe crítico pode realizar a ação "derrubar" ou "empurrar" a distância gastando 2 PE.`,
+
+  "Infiltrador": `INFILTRADOR
+Você opera onde ninguém acha que tem alguém ou algo pra se preocupar.
+Espionagem, observação e silêncio são os meios, o abate é a conclusão.
+Você raciocina sobre o perigo antes dele ser real, se prepara pra fugas, ataques furtivos ou simplesmente um jogo de máscaras interpessoal.
+Quando ataca, é rápido, preciso e definitivo, na maioria das vezes os alvos não percebem oque os atingiu.
+
+HABILIDADE INICIAL | Intenção Mascarada |
+Você recebe treinamento em enganação, diplomacia e infiltração.
+E toda vez que fizer um teste com uma dessas perícias pra se esconder ou omitir alguma informação pode gastar 1 PE pra receber +1D no teste.
+
+HABILDADES AVANÇADAS |
+Escolha uma dessas sempre que tiver acesso a uma nova habilidade dessa vocação.
+
+| Ataque Furtivo |
+Uma vez por rodada, quando atinge um alvo desprevenido com ataque corpo a corpo ou em alcance curto, ou um alvo que você esteja flanqueando, gaste 1 PE para causar +1d6 de dano do tipo da arma. (O gasto e o passo de dano Escalam a cada 2 níveis de NDT) Se causar ferida letal, o alvo deve fazer um teste de fortitude (DT agilidade) ou fica inconsciente.
+
+| Gatuno |
+Você não sofre penalidade por se deslocar estando em furtividade, e quando atinge um alvo desprevinido pode causar uma condição de concussão de 1°nível ao mesmo (teste de fortitude DT agilidade evita.) Ele fica com a condição até passar no teste, e tem direito a um novo teste toda rodada uma vez.
+
+| "Fala Baixo" |
+um numero de aliados = 2+intelecto em alcance curto de você tem seu teste de furtividade auxiliado pelo seu.
+E gastando 2 PE você pode usar uma ação das perícias enganação e infiltração como ação livre uma vez por rodada.`,
+
+  "Socorrista": `SOCORRISTA
+Você é treinado para agir quando tudo já deu errado.
+No meio do fogo cruzado, do sangue e do pânico, é você quem mantém pessoas vivas tempo suficiente para vencer.
+Você não luta para matar na maioria das vezes, luta para impedir que o combate leve mais do que já levou, Enquanto você estiver de pé, a morte precisa esperar você falhar.
+
+HABILIDADE INICIAL | Socorro Acelerado |
+Voce recebe treinamento em medicina e tem +1D nas ações "tratar" e "curar" da perícia medicina.
+
+HABILIDADES AVANÇADAS | 
+Escolha uma dessas sempre que tiver acesso a uma nova habilidade dessa vocação.
+
+| Raciocínio Clínico |
+Você pode remover a uma condição fisica de até 1°nível de um aliado gastando 2 PE.
+E agora pode realizar a ação "analisar oponente" de tática com medicina (uma vez por cena gastando 2 PE sendo ação livre)
+
+| Proficiência medicinal  |
+Você expandiu sua capacidade de cuidar de aliados, concedendo +2 de pontos de cura por dado que rolar em um aliado.
+Agora você pode usar a ações "Dosar" e "Amparar" de medicina.
+
+| Estabilização emergencial |
+Uma vez por cena Você consegue usar a ação "Estabilizar" e "Reanimar" de medicina como ação livre gastando 2 PE.
+E não precisa de equipamentos pra realizar essas ações.`,
+
+  "Engenhoso": `ENGENHOSO
+Você aprendeu a sobreviver não no foco pela força, você confia em ferramentas, dispositivos e na própria mente, encontrando soluções você, Improvisa, adapta e recalibra pra cada situação específica.
+Não é o mais forte do grupo  mas quase sempre é quem tem a resposta certa na hora que precisa.
+Sendo um especialista em área distintas do intelecto você normalmente é pra quem o grupo pergunta as coisas.
+
+HABILIDADE INICIAL | Versatilidade Mental |
+Você recebe treinamento em +3 perícias a sua escolha, e você pode gastar 1 PE em um teste com uma dessas três pra receber +1D no bônus do teste.
+
+HABILIDADES AVANÇADAS | 
+Escolha uma dessas sempre que tiver acesso a uma nova habilidade dessa vocação.
+
+| Análise de Campo |
+Você recebe +1D em testes de análise e de tecnológia.
+E no tempo de duração de uma cena por uns 15 minutos, você pode criar um espaço de até alcance médio e escolher um vantagem/desvantagem de terreno = intelecto pra seus companheiros na área.
+
+| "Acumulador compulsivo" |
+Você pode transformar sucatas, itens quebrados, equipamentos avariados como um equipamento funcional por uma cena gastando 1 PE, mesmo que estejam completamente inuteis.
+Além disso seu limite pra modificações em equipamentos aumenta em 1.
+
+| Servente |
+Você pode gastar 1 reação pra realizar um auxílio no teste de um companheiro adjacente.
+E gastando 1 PE você adiciona seu intelecto como bônus em auxílios.
+E quando a adjacente a um aliado disposto a lhe proteger você recebe +5 na defesa.`,
+
+  "Especialista": `ESPECIALISTA
+Por escolha ou necessidade, você dedicou sua vida a dominar uma área específica. Seja por profissão, obsessão ou sobrevivência, tornou-se extremamente eficiente no que faz. Sua experiência permite antecipar riscos, minimizar falhas e proteger a si mesmo de ameaças relacionadas à sua especialidade.
+
+HABILIDADE INICIAL | Foco Voltado |
+Você ganha +2 em uma perícia mental a sua escolha.
+E quando faz um teste com ela você pode gastar 3 PE pra receber vantagem no teste.
+
+HABILIDADES AVANÇADAS |
+Escolha uma dessas sempre que tiver acesso a uma nova habilidade dessa vocação.
+
+|  ""olha a faca!"  |
+Você recebe +1D em testes de análise ou tática (escolha).
+E você ganha +uma reação defensiva de acordo com a perícia escolhida no foco voltado.
+
+|  Perito  |
+Quando gasta os PE's de foco voltado recebe
++1d6 no resultado total do teste.
+A cada habilidade avançada adicional, você pode gastar +1 PE pra aumentar em um passo esse dado.
+
+|  Fôlego mental  |
+Você recebe +1 PE e PH por nível.
+E quando fica com metade dos pontos de humanidade recebe 1d6 = presença em PE's TEMPORÁRIOS.`,
+
+  "Autoritário": `AUTORITÁRIO
+Você usa itens paranormais e achados do tipo pra manipular da forma que consegue seres que eram vivos a se tornarem seus servos.
+Afinal, ambicioso como você é, você precisa de mais mãos pra alcançar seu objetivo, e todos sobre sua autoridade irão o erguer a isso.
+
+HABILIDADE INICIAL | Vínculo Profundo |
+Você se vinculou profundamente a um artefato paranormal, mesmo que ele não possuísse 4°grau, por algum motivo você conseguiu se vincular a ale dessa forma, porém perdeu apenas metade dos pontos de humanidade que normalmente perderia, e graças ao vinculo você se tornou capaz de ter acesso no futuro as habilidades avançadas dessa vocação.
+E você pode vincular outros seres a si mesmo, todos te de ser pessoas com 0 de humanidade que não demonificaram ainda.
+Você tem um limite = presença x2 de seres vinculados, eles lhe obedecem.
+Em termos de regra, você pode deixa-los agir livremente ou gastar uma reação pra manipular suas ações na rodada.
+Você perde 2 de PE máximos a cada cobaia obtida.
+(Não se é possível obter essa habildade inicial se você não se focar nesta vocação)
+
+HABILIDADES AVANÇADAS |
+Escolha uma dessas sempre que tiver acesso a uma nova habilidade dessa vocação.
+
+|  Cobaia Preferida  |
+Escolha um dos seres vinculados a você, ele recebe +2 em três perícias a sua escolha, além de +2d6 em PV.
+E pra controlá-lo você não necessita gastar reação alguma.
+Quando faz isso sua cobaia dobra na contagem de cobaias que pode possuir.
+
+|  Marcas Compartilhadas  |
+Uma cobaia a sua escolha recebe uma marca paranormal que possua, mas apenas as vantagens se assim o tiver e +2d6 em PV.
+Quando faz isso sua cobaia dobra na contagem de cobaias que pode possuir.
+
+|  "Até Breve"  |
+Decida um comando com o narrador, uma risada maléfica, um grito, oque você achar melhor pro seu personagem.
+Você pode gastar uma ação completa e 2 PE por cobaia entoando esse comando, todas a suas cobaias recebem 1d6 em PV's temporários = sua presença e R.D a dano fisico = dobro da presença.`,
+
+  "Vetorial": `VETORIAL
+Você usa seu vinculo de itens e artefatos paranormais de forma tática junto de suas habilidades de combate, como um combatente paranormal vivo.
+Usando rituais, deformações físicas, laminas e armas de fogo.
+De qualquer forma, Você é um soldado da realidade, mesmo tendo seu inimigo habitando em você......ou talvez não seja.
+
+HABILIDADE INICIAL |  Lâmina Paranormal  |
+Você tem 2 equipamentos (armas paranormais) vinculados a você, o grau deles é escolhido pela rolagem de 2d4.
+(Não se é possível obter essa habildade inicial se você não se focar nesta vocação)
+
+HABILIDADES AVANÇADAS |
+Escolha uma dessas sempre que tiver acesso a uma nova habilidade dessa vocação.
+
+|  Agilidade de Arsenal  |
+Sempre que realizar um acerto crítico, você tem direito a ativar a habilidade de um de seus equipamentos paranormais como ação livre (caso a habilidade exija um golpe, você o efetua)
+
+|  Transferir Marca  |
+Sempre que quiser, você pode transfigurar uma marca em seu corpo pra um equipamento seu gastando una reação e 2 PE, o equipamento receber a vantagem da marca sem custo de PE (caso exista), e você continua com quaisquer desvantagens que a marca causasse. (Retornar a marcar pra seu corpo custa uma reação e exige tocar o armamento)
+E quando faz isso seu armamento recebe +1 no bônus de acerto e dano, pra cada grau da marca.
+
+|  Exercito de um homem só  |
+você recebe +1 reação de bloqueio pra cada item vinculado a você. (Caso você receba ferida letal no golpe o item se quebra e você o perde)
+E toda vez que realizar um golpe crítico recebe +2 no bônus de dano e acerto (acumulativo = presença)`,
+
+  "Grimorista": `GRIMORISTA
+Tendo entrado em contato com um grimório com informações ocultistas, ou tendo compilado as informações, rituais e demonficados em um caderno, fez com que você acabasse se vinculado a elas, no final.
+O paranormal se impregnou em sua cabeça como lógicas que ao mesmo tempo que não fazem sentido funcionam, e pra você, são sua realidade.
+
+HABILIDADE INICIAL |  Conhecimento oculto  |
+Você é vinculado um item paranormal em formato de documento escrito e tem um número de rituais = metade de seu nível e ele é de 2° graú.
+Você precisa estar empunhando o item pra conjurar os rituais e atender os pré-requisitos escritos no documento.
+O item concede +5 em testes de ocultismo.
+(Não se é possível obter essa habildade inicial se você não se focar nesta vocação)
+
+HABILIDADES AVANÇADAS |
+Escolha uma dessas sempre que tiver acesso a uma nova habilidade dessa vocação.
+
+|  Memoria Terrível  |
+Você pode memorizar 1 ritual do grimório e seu simbolo, não precisando mais do grimório pra o utilizar (a cada 5 níveis ds NDT pode memorizar +1)
+Cada ritual memorizado ainda precisa dos seus pré-requisitos quitados, e você recebe +5 em seu dano e DT quando empunhando o grimório e realizando-o.
+
+|  Tatuagens Ritualísticas  |
+Você entendeu como usar a lógica do paranormal e usar as marcas em seu corpo sem o machucar de forma severa.
+Você recebe a marca "lembrança física" e o efeito invocado são os rituais que obtinham no grimório, agora podendo conjura-los sem o grimorio.
+Caso tenha o grimório, você pode fazer um teste de domínio [DT 10+5 por custo de ação] pra diminuir em um passo a conjuração do ritual.
+
+|  Cicatrizes Cerebrais  |
+Você espalhou as informações pelo seu corpo, dentro de sua carne e crânio em um processo terrível.
+Você perde 12 pontos de humanidade.
+Em contrapartida recebe 2d6 pontos de PV E PE e recebe PONTOS DE R.D a impacto, corte, balístico e perfurante = Presença (escala a cada 5 níveis)`,
+
+  "Atado": `ATADO
+Você escolheu se vincular a um único Itém paranormal, uma arma, grimório, restos mortais.
+Seu corpo se tornou outra coisa assim como sua mente você expandiu ambos, afinal, para a evolução sacrifícios são OBRIGATÓRIOS.
+E você não mede esforços pra sacrificar quem era.
+
+HABILIDADE INICIAL |  Metade do Outro lado  |
+Você forçou uma vinculação de 5° grau a um equipamento paranormal.
+Ao invés das percas comuns de 4° grau.
+Você perdeu 20 pontos de humanidade e recebe 3 marcas paranormais.
+E recebeu 1d8 cinco vezes pra espalhar em PV OU PE.
+O item se fundiu a você criando marcas permanentes em seu corpo.
+
+HABILIDADES AVANÇADAS |
+Escolha uma dessas sempre que tiver acesso a uma nova habilidade dessa vocação.
+
+|  Marcado.  |
+Você recebe duas origens comuns.
+E um talento em um atributo a sua escolha.
+
+|  Corpo "Comum" |
+Você recebe +1 reação defensiva e uma ação de movimento adicional.
+E recebe uma habilidade de origem complexa a sua escolha.
+
+|  Retirar de Sí  |
+Você gastando 2PE e uma reação por nível de condição pode retirar uma condição que o esteja afetando.
+Recebe cura acelerada 3 (recupera 3 pv por rodada).
+E recebe uma habilidade de origem complexa a sua escolha.`,
+
+  "Regressado": `REGRESSADO
+Você quase perdeu sua mente para a DISTORÇÃO, e de alguma forma voltou, não se tornou um demonificado ou algo similar, mas também não é mais só uma pessoa comum, já não era, sempre não foi não é?
+
+HABILIDADE INICIAL |  Mente no Limiar  |
+Você tem 2 marcas paranormais, uma delas sendo "Retardo mental".
+E tem um talento em um atributo a sua escolha.
+
+HABILIDADES AVANÇADAS |
+Diferente das outras vocações, role 1d20 pra decidir de qual vocação você vai conseguir um poder avançado sempre que tiver acesso a uma nova habilidade de vocação.
+Junto da habilidade você ganha uma marca paranormal (se a habilidade já lhe concede uma não recebe)`
+};
+
+/* ---------- UI Vocação ---------- */
+function atualizarVocacaoHabilidades(){
+  const voc = document.getElementById('vocacaoBase').value;
+  const box = document.getElementById('vocacaoHabilidades');
+  if(vocacoesText[voc]){
+    box.textContent = vocacoesText[voc];
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+/* ---------- Vocação paranormal function (fix for ReferenceError) ---------- */
+function atualizarVocacaoParanormal(){
+  const conexao = parseInt((document.getElementById('conexao').value||'0').toString().replace('%','')) || 0;
+  const arquetipoEl = document.getElementById('arquetipo');
+  const arquetipo = arquetipoEl ? arquetipoEl.value : '';
+  const box = document.getElementById('vocacaoParanormalBox');
+  const select = document.getElementById('vocacaoParanormal');
+  select.innerHTML = '';
+  if(conexao >= 10){
+    box.style.display = 'block';
+    // Lists adjusted exactly as requested
+    const vocacoesComb = ['Abatedor','Troglodita','Macerado','Tirano','arauto'];
+    const vocacoesRit = ['Fragmentado','Deflagrador','Ominoso','Deformador','Transfigurador'];
+    let lista = [];
+    if(arquetipo === 'eloquente') lista = [...vocacoesComb, ...vocacoesRit];
+    else if(arquetipo === 'combatente') lista = [...vocacoesComb];
+    else if(arquetipo === 'ritualista') lista = [...vocacoesRit];
+    else lista = [...vocacoesComb, ...vocacoesRit]; // fallback: show all
+    lista.forEach(v=>{ const opt=document.createElement('option'); opt.textContent=v; select.appendChild(opt); });
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+/* ---------- Rolagens ---------- */
+function mostrarRolagem(nome, quantidade){
+  const results=[]; let total=0;
+  for(let i=0;i<quantidade;i++){ const v=rolarD20(); results.push(v); total+=v; }
+  const box=document.getElementById('diceResults'); box.innerHTML='';
+  results.forEach(r=>{ const d=document.createElement('div'); d.className='die'; d.textContent=r; box.appendChild(d); });
+  document.getElementById('diceTitle').textContent = `${nome}: ${quantidade}d20`;
+  document.getElementById('diceTotal').textContent = total;
+  document.getElementById('diceModal').style.display='flex';
+}
+function fecharModal(){ document.getElementById('diceModal').style.display='none'; }
+
+/* ---------- Archetype bonuses ---------- */
+function calcularBonusCombatente(vigor, presenca, conexaoPercent, arquetipo) {
+  let bonusPV = 0; let bonusPE = 0;
+  if (arquetipo === 'combatente' && conexaoPercent >= 5) {
+    bonusPV += 25 + vigor;
+    bonusPE += 3 + presenca;
+    const extraSteps = Math.floor((conexaoPercent - 5) / 5);
+    if (extraSteps > 0) {
+      bonusPV += extraSteps * (10 + vigor);
+      bonusPE += extraSteps * (3 + presenca);
+    }
+  }
+  return { bonusPV, bonusPE };
+}
+function calcularBonusEloquente(vigor, presenca, conexaoPercent, arquetipo) {
+  let bonusPV = 0; let bonusPE = 0;
+  if (arquetipo === 'eloquente' && conexaoPercent >= 5) {
+    bonusPV += 15 + vigor;
+    bonusPE += 5 + presenca;
+    const extraSteps = Math.floor((conexaoPercent - 5) / 5);
+    if (extraSteps > 0) {
+      bonusPV += extraSteps * (6 + vigor);
+      bonusPE += extraSteps * (5 + presenca);
+    }
+  }
+  return { bonusPV, bonusPE };
+}
+function calcularBonusRitualista(vigor, presenca, conexaoPercent, arquetipo) {
+  let bonusPV = 0; let bonusPE = 0;
+  if (arquetipo === 'ritualista' && conexaoPercent >= 5) {
+    bonusPV += 10 + vigor;
+    bonusPE += 10 + presenca;
+    const extraSteps = Math.floor((conexaoPercent - 5) / 5);
+    if (extraSteps > 0) {
+      bonusPV += extraSteps * (4 + vigor);
+      bonusPE += extraSteps * (8 + presenca);
+    }
+  }
+  return { bonusPV, bonusPE };
+}
+
+/* ---------- Training parsing & mapping ---------- */
+function parseTrainingLevel(raw){
+  raw = (raw||'').toString();
+  if(raw.startsWith('Mundano')){
+    const n = parseInt(raw.replace('Mundano ',''));
+    return {isMundano:true, level:n || 0};
+  }
+  if(raw.startsWith('Nível')){
+    const n = parseInt(raw.replace('Nível ',''));
+    return {isMundano:false, level:n || 0};
+  }
+  return {isMundano:false, level:0};
+}
+function globalLevelNumeric(parsed){
+  if(parsed.isMundano) return parsed.level || 0;
+  return 5 + (parsed.level || 0);
+}
+
+/* ---------- Choices UI & storage helpers ---------- */
+function showChoiceModal(title, bodyHtml, onConfirm){
+  const modal = document.getElementById('choiceModal');
+  document.getElementById('choiceTitle').textContent = title;
+  document.getElementById('choiceBody').innerHTML = bodyHtml;
+  modal.style.display = 'flex';
+  const handler = ()=>{
+    modal.style.display = 'none';
+    document.getElementById('choiceConfirm').removeEventListener('click', handler);
+    onConfirm();
+  };
+  document.getElementById('choiceConfirm').addEventListener('click', handler);
+}
+
+function updateChoicesPanel(){
+  const panel = document.getElementById('choicesContent');
+  const c = getStoredChoice();
+  if(!c || (Object.keys(c).length === 0)){
+    panel.innerHTML = 'Nenhuma escolha armazenada.';
+    return;
+  }
+  const rows = [];
+  if(c.mundano){
+    const m = c.mundano;
+    if(m['4_choice']) rows.push(`<div class="choice-row"><div class="choice-label">Mundano 4</div><div class="choice-val">${m['4_choice']}</div></div>`);
+    if(m['5_rolls']) rows.push(`<div class="choice-row"><div class="choice-label">Mundano 5 (rolagens)</div><div class="choice-val">PV: ${m['5_rolls'].pv || 0} • PE: ${m['5_rolls'].pe || 0} • PH: ${m['5_rolls'].ph || 0}</div></div>`);
+  }
+  if(c.niveis){
+    Object.keys(c.niveis).sort((a,b)=>a-b).forEach(l=>{
+      const entry = c.niveis[l];
+      if(entry){
+        if(entry.choices) rows.push(`<div class="choice-row"><div class="choice-label">Nível ${l} - escolhas</div><div class="choice-val">${entry.choices.join(', ')}</div></div>`);
+        if(entry.rolls) rows.push(`<div class="choice-row"><div class="choice-label">Nível ${l} - rolagens</div><div class="choice-val">${Object.entries(entry.rolls).map(([k,v])=>`${k.toUpperCase()}: ${v}`).join(' • ')}</div></div>`);
+      }
+    });
+  }
+  panel.innerHTML = rows.join('') || 'Nenhuma escolha armazenada.';
+}
+
+/* ---------- Rolling / populating stored rolls when needed ---------- */
+function rollIfNeededForStoredChoice(parsed){
+  const stored = getStoredChoice();
+  let changed = false;
+  stored.mundano = stored.mundano || {};
+  stored.niveis = stored.niveis || {};
+
+  if(globalLevelNumeric(parsed) >= 5 && !stored.mundano['5_rolls']){
+    stored.mundano['5_rolls'] = {
+      pv: rolarD4() + (parseInt(document.getElementById('vigor').value)||0),
+      pe: rolarD4() + (parseInt(document.getElementById('presenca').value)||0),
+      ph: rolarD4() + 2 + (parseInt(document.getElementById('presenca').value)||0)
+    };
+    changed = true;
+  }
+
+  Object.keys(stored.niveis).forEach(k=>{
+    const entry = stored.niveis[k];
+    if(entry && entry.choices && !entry.rolls){
+      entry.rolls = entry.rolls || {};
+      entry.choices.forEach(choice=>{
+        if(choice === 'pv') entry.rolls.pv = rolarD4() + (parseInt(document.getElementById('vigor').value)||0);
+        if(choice === 'pe') entry.rolls.pe = rolarD4() + (parseInt(document.getElementById('presenca').value)||0);
+        if(choice === 'ph') entry.rolls.ph = rolarD4() + (parseInt(document.getElementById('presenca').value)||0);
+      });
+      changed = true;
+    }
+  });
+
+  if(!parsed.isMundano){
+    const lvl = parsed.level || 0;
+    if(lvl >= 6 && (!stored.niveis['6'] || !stored.niveis['6'].rolls)){
+      stored.niveis['6'] = stored.niveis['6'] || {};
+      stored.niveis['6'].rolls = stored.niveis['6'].rolls || { pv: rolarD6(), pe: rolarD6(), ph: rolarD6() };
+      changed = true;
+    }
+    if(lvl >= 7 && (!stored.niveis['7'] || !stored.niveis['7'].rolls)){
+      function roll3d6(){ return rolarD6()+rolarD6()+rolarD6(); }
+      stored.niveis['7'] = stored.niveis['7'] || {};
+      stored.niveis['7'].rolls = stored.niveis['7'].rolls || { pv: roll3d6(), pe: roll3d6(), ph: roll3d6() };
+      changed = true;
+    }
+  }
+
+  if(changed) storeChoice(stored);
+}
+
+/* ---------- Prompts for required choices ---------- */
+function ensureTrainingChoices(parsed){
+  const stored = getStoredChoice();
+  stored.mundano = stored.mundano || {};
+  stored.niveis = stored.niveis || {};
+  const globalLvl = globalLevelNumeric(parsed);
+
+  if(globalLvl >= 4 && !stored.mundano['4_choice']){
+    const body = `<div class="hint">Escolha um entre PV, PE ou PH para receber o bônus de Mundano-4.</div>
+      <label><input type="radio" name="mund4_choice" value="pv"> PV (+2 + Vigor)</label>
+      <label><input type="radio" name="mund4_choice" value="pe"> PE (+2 + Presença)</label>
+      <label><input type="radio" name="mund4_choice" value="ph"> PH (+2 + Presença)</label>`;
+    showChoiceModal('Escolha — Mundano 4', body, ()=>{
+      const sel = document.querySelector('input[name="mund4_choice"]:checked');
+      if(sel){
+        stored.mundano['4_choice'] = sel.value;
+        storeChoice(stored);
+      }
+      atualizarStatus();
+    });
+    return true;
+  }
+
+  if(globalLvl >= 5 && !stored.mundano['5_rolls']){
+    rollIfNeededForStoredChoice(parsed);
+  }
+
+  if(!parsed.isMundano){
+    const lvl = parsed.level || 0;
+    if(lvl >= 2 && !stored.niveis['2'] ){
+      const body = `<div class="hint">Escolha até 2 entre PV, PE e PH. Cada escolha dará 1d4 (+Vigor para PV, +Presença para PE/PH).</div>
+        <label><input type="checkbox" name="nivel_choice_2" value="pv"> PV</label>
+        <label><input type="checkbox" name="nivel_choice_2" value="pe"> PE</label>
+        <label><input type="checkbox" name="nivel_choice_2" value="ph"> PH</label>`;
+      showChoiceModal('Escolha — Nível 2', body, ()=>{
+        const sels = Array.from(document.querySelectorAll('input[name="nivel_choice_2"]:checked')).map(i=>i.value);
+        if(sels.length >= 1){
+          stored.niveis['2'] = stored.niveis['2'] || {};
+          stored.niveis['2'].choices = sels.slice(0,2);
+          stored.niveis['2'].rolls = {};
+          if(stored.niveis['2'].choices.includes('pv')) stored.niveis['2'].rolls.pv = rolarD4() + (parseInt(document.getElementById('vigor').value)||0);
+          if(stored.niveis['2'].choices.includes('pe')) stored.niveis['2'].rolls.pe = rolarD4() + (parseInt(document.getElementById('presenca').value)||0);
+          if(stored.niveis['2'].choices.includes('ph')) stored.niveis['2'].rolls.ph = rolarD4() + (parseInt(document.getElementById('presenca').value)||0);
+          storeChoice(stored);
+        }
+        atualizarStatus();
+      });
+      return true;
+    }
+    if(lvl >= 3 && !stored.niveis['3'] ){
+      const body = `<div class="hint">Escolha até 2 entre PV, PE e PH. Cada escolha dará 1d4 (+Vigor para PV, +Presença para PE/PH).</div>
+        <label><input type="checkbox" name="nivel_choice_3" value="pv"> PV</label>
+        <label><input type="checkbox" name="nivel_choice_3" value="pe"> PE</label>
+        <label><input type="checkbox" name="nivel_choice_3" value="ph"> PH</label>`;
+      showChoiceModal('Escolha — Nível 3', body, ()=>{
+        const sels = Array.from(document.querySelectorAll('input[name="nivel_choice_3"]:checked')).map(i=>i.value);
+        if(sels.length >= 1){
+          stored.niveis['3'] = stored.niveis['3'] || {};
+          stored.niveis['3'].choices = sels.slice(0,2);
+          stored.niveis['3'].rolls = {};
+          if(stored.niveis['3'].choices.includes('pv')) stored.niveis['3'].rolls.pv = rolarD4() + (parseInt(document.getElementById('vigor').value)||0);
+          if(stored.niveis['3'].choices.includes('pe')) stored.niveis['3'].rolls.pe = rolarD4() + (parseInt(document.getElementById('presenca').value)||0);
+          if(stored.niveis['3'].choices.includes('ph')) stored.niveis['3'].rolls.ph = rolarD4() + (parseInt(document.getElementById('presenca').value)||0);
+          storeChoice(stored);
+        }
+        atualizarStatus();
+      });
+      return true;
+    }
+    if(lvl >= 5 && !stored.niveis['5'] ){
+      const body = `<div class="hint">Escolha até 2 entre PV, PE e PH. Cada escolha dará 1d6 (+Vigor para PV, +Presença para PE/PH).</div>
+        <label><input type="checkbox" name="nivel_choice_5" value="pv"> PV</label>
+        <label><input type="checkbox" name="nivel_choice_5" value="pe"> PE</label>
+        <label><input type="checkbox" name="nivel_choice_5" value="ph"> PH</label>`;
+      showChoiceModal('Escolha — Nível 5', body, ()=>{
+        const sels = Array.from(document.querySelectorAll('input[name="nivel_choice_5"]:checked')).map(i=>i.value);
+        if(sels.length >= 1){
+          stored.niveis['5'] = stored.niveis['5'] || {};
+          stored.niveis['5'].choices = sels.slice(0,2);
+          stored.niveis['5'].rolls = {};
+          if(stored.niveis['5'].choices.includes('pv')) stored.niveis['5'].rolls.pv = rolarD6() + (parseInt(document.getElementById('vigor').value)||0);
+          if(stored.niveis['5'].choices.includes('pe')) stored.niveis['5'].rolls.pe = rolarD6() + (parseInt(document.getElementById('presenca').value)||0);
+          if(stored.niveis['5'].choices.includes('ph')) stored.niveis['5'].rolls.ph = rolarD6() + (parseInt(document.getElementById('presenca').value)||0);
+          storeChoice(stored);
+        }
+        atualizarStatus();
+      });
+      return true;
+    }
+  }
+  return false;
+}
+
+/* ---------- Apply training bonuses retroactively ---------- */
+function applyTrainingBonuses(parsed, vigor, presenca){
+  const stored = getStoredChoice() || {};
+  stored.mundano = stored.mundano || {};
+  stored.niveis = stored.niveis || {};
+  const gl = globalLevelNumeric(parsed);
+  let addPV=0, addPE=0, addPH=0;
+
+  if(gl >= 2) addPH += 2; // Mundano-2
+  if(gl >= 3) addPH += 2; // Mundano-3
+  if(gl >= 4){
+    const m4 = stored.mundano['4_choice'];
+    if(m4 === 'pv') addPV += 2 + vigor;
+    if(m4 === 'pe') addPE += 2 + presenca;
+    if(m4 === 'ph') addPH += 2 + presenca;
+  }
+  if(gl >= 5){
+    const rolls = stored.mundano['5_rolls'] || {};
+    addPV += (rolls.pv || 0);
+    addPE += (rolls.pe || 0);
+    addPH += (rolls.ph || 0);
+  }
+
+  if(gl > 5){
+    const effectiveNivel = gl - 5;
+    if(effectiveNivel >= 1){ addPV += 4; addPE += 2; addPH += 5; }
+    if(effectiveNivel >= 2){
+      const n2 = stored.niveis['2'];
+      if(n2 && n2.rolls){ addPV += (n2.rolls.pv || 0); addPE += (n2.rolls.pe || 0); addPH += (n2.rolls.ph || 0); }
+      addPH += 3;
+    }
+    if(effectiveNivel >= 3){
+      const n3 = stored.niveis['3'];
+      if(n3 && n3.rolls){ addPV += (n3.rolls.pv || 0); addPE += (n3.rolls.pe || 0); addPH += (n3.rolls.ph || 0); }
+      addPH += 3;
+    }
+    if(effectiveNivel >= 4){ addPV += 5; addPE += 5; addPH += 5; }
+    if(effectiveNivel >= 5){
+      const n5 = stored.niveis['5'];
+      if(n5 && n5.rolls){ addPV += (n5.rolls.pv || 0); addPE += (n5.rolls.pe || 0); addPH += (n5.rolls.ph || 0); }
+      addPH += 2;
+    }
+    if(effectiveNivel >= 6){
+      const n6 = stored.niveis['6'];
+      if(n6 && n6.rolls){ addPV += (n6.rolls.pv || 0); addPE += (n6.rolls.pe || 0); addPH += (n6.rolls.ph || 0); }
+      addPH += 2;
+    }
+    if(effectiveNivel >= 7){
+      const n7 = stored.niveis['7'];
+      if(n7 && n7.rolls){ addPV += (n7.rolls.pv || 0); addPE += (n7.rolls.pe || 0); addPH += (n7.rolls.ph || 0); }
+      addPH += 8;
+    }
+  }
+
+  return {addPV, addPE, addPH};
+}
+
+/* ---------- Limit PE and DT ---------- */
+function computeLimitPEFromGlobalLevel(globalLevelNumeric, conexaoPercent, presenca){
+  const fromTraining = Math.floor(globalLevelNumeric / 2);
+  const fromConexao = Math.floor(conexaoPercent / 5);
+  return fromTraining + fromConexao + (presenca || 0);
+}
+
+/* ---------- setIfAuto helper ---------- */
+function setIfAuto(el, value){
+  if(!el) return;
+  const auto = document.getElementById('autoCalc').checked;
+  const manual = el.getAttribute('data-manual') === 'true';
+  if(auto && !manual){
+    el.value = Math.max(0, Math.round(value));
+  }
+}
+
+/* ---------- main status update ---------- */
+function atualizarStatus(){
+  const vigor = parseInt(document.getElementById('vigor').value) || 0;
+  const presenca = parseInt(document.getElementById('presenca').value) || 0;
+  const conexao = parseInt((document.getElementById('conexao').value||'0').toString().replace('%','')) || 0;
+  const arquetipo = (document.getElementById('arquetipo') && document.getElementById('arquetipo').value) || '';
+  const treinamentoRaw = document.getElementById('treinamento').value;
+  const treinamento = parseTrainingLevel(treinamentoRaw);
+  const globalLvl = globalLevelNumeric(treinamento);
+
+  let pvBase = 5 + vigor;
+  let peBase = 2 + presenca;
+  let phBase = 10 + (presenca * 2);
+
+  const bC = calcularBonusCombatente(vigor, presenca, conexao, arquetipo);
+  const bE = calcularBonusEloquente(vigor, presenca, conexao, arquetipo);
+  const bR = calcularBonusRitualista(vigor, presenca, conexao, arquetipo);
+
+  rollIfNeededForStoredChoice(treinamento);
+  ensureTrainingChoices(treinamento);
+
+  const tb = applyTrainingBonuses(treinamento, vigor, presenca);
+
+  let totalPV = pvBase + bC.bonusPV + bE.bonusPV + bR.bonusPV + (tb.addPV || 0);
+  let totalPE = peBase + bC.bonusPE + bE.bonusPE + bR.bonusPE + (tb.addPE || 0);
+  let totalPH = phBase + (tb.addPH || 0);
+
+  const limite = computeLimitPEFromGlobalLevel(globalLvl, conexao, presenca);
+  const dt = 10 + limite + presenca;
+
+  let defesaBaseDefault = 10 + (parseInt(document.getElementById('agilidade').value)||0);
+  if(globalLvl >= 1) defesaBaseDefault = 15 + (parseInt(document.getElementById('agilidade').value)||0);
+  if(globalLvl >= 5) defesaBaseDefault = 20 + (parseInt(document.getElementById('agilidade').value)||0);
+
+  const reflexos = parseInt(document.getElementById('p_reflexos').value) || 0;
+  const esquivaDefault = defesaBaseDefault + reflexos;
+
+  const fortitude = parseInt(document.getElementById('p_fortitude').value) || 0;
+  const bloqueioDefault = fortitude;
+
+  const forca = parseInt(document.getElementById('forca').value) || 0;
+  const contraDefault = defesaBaseDefault + forca;
+
+  setIfAuto(document.getElementById('pvMax'), totalPV);
+  setIfAuto(document.getElementById('peMax'), totalPE);
+  setIfAuto(document.getElementById('phMax'), totalPH);
+
+  const auto = document.getElementById('autoCalc').checked;
+  if(auto){
+    if(document.getElementById('pvAtual').getAttribute('data-manual') !== 'true') document.getElementById('pvAtual').value = Math.max(0, Math.round(totalPV));
+    if(document.getElementById('peAtual').getAttribute('data-manual') !== 'true') document.getElementById('peAtual').value = Math.max(0, Math.round(totalPE));
+    if(document.getElementById('phAtual').getAttribute('data-manual') !== 'true') document.getElementById('phAtual').value = Math.max(0, Math.round(totalPH));
+  }
+
+  setIfAuto(document.getElementById('defesa'), defesaBaseDefault);
+  setIfAuto(document.getElementById('esquiva'), esquivaDefault);
+  setIfAuto(document.getElementById('bloqueio'), bloqueioDefault);
+  setIfAuto(document.getElementById('contra'), contraDefault);
+
+  setIfAuto(document.getElementById('limitePE'), limite);
+  setIfAuto(document.getElementById('dtBase'), dt);
+  updateChoicesPanel();
+}
+
+/* ---------- events ---------- */
+Array.from(document.querySelectorAll('.roll-btn')).forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const selId = btn.dataset.select; const nome = btn.dataset.name;
+    const el = document.getElementById(selId);
+    const qtd = parseInt(el.value) || 1;
+    mostrarRolagem(nome, qtd);
+  });
+});
+
+[...document.querySelectorAll('select, input')].forEach(el=>{
+  el.addEventListener('input', (e)=>{
+    if(el.hasAttribute('data-auto')){
+      el.setAttribute('data-manual', 'true');
+    }
+  });
+  el.addEventListener('change', ()=>{
+    if(el.id === 'conexao') atualizarConexao();
+    else if(el.id === 'arquetipo' || el.id === 'treinamento' || el.id === 'vigor' || el.id === 'presenca' || el.id === 'agilidade' || el.id === 'forca') {
+      atualizarStatus();
+      const parsed = parseTrainingLevel(document.getElementById('treinamento').value);
+      ensureTrainingChoices(parsed);
+    }
+    else if(el.id === 'vocacaoBase') atualizarVocacaoHabilidades();
+    localStorage.setItem('ficha_autosave', JSON.stringify(collectFicha()));
+  });
+});
+
+document.getElementById('btnResetManual').addEventListener('click', ()=>{
+  [...document.querySelectorAll('[data-manual]')].forEach(i=>i.removeAttribute('data-manual'));
+  atualizarStatus();
+});
+
+document.getElementById('toggleChoicesBtn').addEventListener('click', ()=>{
+  const panel = document.getElementById('choicesPanel');
+  if(panel.style.display === 'block'){ panel.style.display = 'none'; document.getElementById('toggleChoicesBtn').textContent = 'Mostrar escolhas'; }
+  else { panel.style.display = 'block'; document.getElementById('toggleChoicesBtn').textContent = 'Ocultar escolhas'; updateChoicesPanel(); }
+});
+
+document.getElementById('btnClearChoices').addEventListener('click', ()=>{
+  if(confirm('Limpar todas as escolhas armazenadas?')){ resetTrainingChoices(); alert('Escolhas limpas.'); }
+});
+document.getElementById('btnExportChoices').addEventListener('click', ()=>{
+  const data = getStoredChoice() || {};
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'escolhas_treinamento.json'; a.click(); URL.revokeObjectURL(url);
+});
+
+document.getElementById('btnSave').addEventListener('click', ()=>{ localStorage.setItem('ficha_saved', JSON.stringify(collectFicha())); alert('Ficha salva no armazenamento local.'); });
+document.getElementById('btnExport').addEventListener('click', ()=>{ const blob = new Blob([JSON.stringify(collectFicha(), null, 2)], {type:'application/json'}); const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'ficha_personagem.json'; a.click(); URL.revokeObjectURL(url); });
+
+document.getElementById('btnImport').addEventListener('click', ()=>{
+  const txt = prompt('Cole aqui o JSON da ficha para importar:');
+  try{ if(!txt) return; const data = JSON.parse(txt); applyFicha(data); alert('Importado com sucesso.'); }catch(e){ alert('JSON inválido.'); }
+});
+
+function collectFicha(){
+  const data = {};
+  document.querySelectorAll('input, select').forEach(i=>{ data[i.id || i.name || ('el_'+Math.random().toString(36).slice(2,7))] = i.value; });
+  data.training_choice = getStoredChoice();
+  return data;
+}
+function applyFicha(data){
+  Object.keys(data).forEach(k=>{ 
+    if(k === 'training_choice') { localStorage.setItem('training_choice', JSON.stringify(data.training_choice || {})); return; }
+    const el = document.getElementById(k); if(el) el.value = data[k];
+  });
+  atualizarConexao(); atualizarStatus(); atualizarVocacaoHabilidades();
+}
+
+/* ---------- Conexão handling ---------- */
+function atualizarConexao(){
+  const conexao = parseInt((document.getElementById('conexao').value||'0').toString().replace('%','')) || 0;
+  const arquetipoBox = document.getElementById('arquetipoBox');
+  arquetipoBox.style.display = conexao >= 5 ? 'block' : 'none';
+  atualizarVocacaoParanormal();
+  atualizarStatus();
+}
+
+/* ---------- Init ---------- */
+(function(){ const autos = localStorage.getItem('ficha_autosave'); if(autos){ try{ applyFicha(JSON.parse(autos)); }catch(e){} }})();
+atualizarStatus(); atualizarConexao(); atualizarVocacaoHabilidades();
+
+(function(){
+  function showVocacaoExtra(){
+    const vocEl = document.getElementById('vocacaoBase');
+    if(!vocEl) return;
+    vocEl.addEventListener('change', ()=>{
+      atualizarVocacaoHabilidades();
+    });
+    atualizarVocacaoHabilidades();
+  }
+  showVocacaoExtra();
+})();
+</script>
+</body>
+</html>

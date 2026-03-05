@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -41,10 +42,20 @@ border-radius:8px;
 .ficha{
 display:flex;
 justify-content:space-between;
+align-items:center;
 margin-top:10px;
-padding:8px;
+padding:10px;
 background:#0f0f14;
 border-radius:6px;
+}
+
+.ficha span{
+flex:1;
+}
+
+.actions button{
+width:auto;
+margin-left:6px;
 }
 
 </style>
@@ -64,19 +75,27 @@ border-radius:6px;
 
 <p id="status">Não conectado</p>
 
+
 <div class="section">
 
 <h2>Painel</h2>
+
+<input id="fichaNome" placeholder="Nome da nova ficha">
 
 <button id="createFicha">CRIAR NOVA FICHA</button>
 <button id="manageFicha">GERENCIAR FICHAS</button>
 
 <div id="lista" style="display:none">
+
 <h3>Minhas fichas</h3>
+
 <div id="fichas"></div>
+
 </div>
 
 </div>
+
+
 
 <script type="module">
 
@@ -103,6 +122,7 @@ doc
 } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js";
 
 
+
 const firebaseConfig = {
     apiKey: "AIzaSyBFm18hEqWFW6jgnu4CYp-E9_sL7YeC3wA",
     authDomain: "fichas-rpg00.firebaseapp.com",
@@ -113,15 +133,20 @@ const firebaseConfig = {
   };
 
 
+
+
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
 
 
 const email = document.getElementById("email");
 const password = document.getElementById("password");
 const status = document.getElementById("status");
 const logoutBtn = document.getElementById("logout");
+
+const fichaNome = document.getElementById("fichaNome");
 
 const lista = document.getElementById("lista");
 const fichasDiv = document.getElementById("fichas");
@@ -130,10 +155,14 @@ let user = null;
 let unsubscribe = null;
 
 
+
 function setStatus(msg,err=false){
+
 status.textContent = msg;
 status.style.color = err ? "#ff6b6b":"white";
+
 }
+
 
 
 /* LOGIN */
@@ -141,40 +170,58 @@ status.style.color = err ? "#ff6b6b":"white";
 document.getElementById("signup").onclick = async ()=>{
 
 try{
+
 await createUserWithEmailAndPassword(auth,email.value,password.value);
+
 }catch(e){
+
 setStatus(e.message,true);
+
 }
 
 };
+
 
 
 document.getElementById("login").onclick = async ()=>{
 
 try{
+
 await signInWithEmailAndPassword(auth,email.value,password.value);
+
 }catch(e){
+
 setStatus(e.message,true);
+
 }
 
 };
+
 
 
 document.getElementById("reset").onclick = async ()=>{
 
 try{
+
 await sendPasswordResetEmail(auth,email.value);
 setStatus("Email enviado");
+
 }catch(e){
+
 setStatus(e.message,true);
+
 }
 
 };
 
 
+
 logoutBtn.onclick = async ()=>{
+
 await signOut(auth);
+
 };
+
 
 
 /* ESTADO LOGIN */
@@ -201,13 +248,77 @@ if(unsubscribe) unsubscribe();
 });
 
 
+
+/* ISOLAMENTO STORAGE POR FICHA */
+
+function injectStorageNamespace(html,id){
+
+const script = `
+
+<script>
+
+(function(){
+
+const FICHA_ID = "${id}";
+
+const oldSet = Storage.prototype.setItem;
+const oldGet = Storage.prototype.getItem;
+const oldRemove = Storage.prototype.removeItem;
+
+function key(k){
+
+return "ficha_"+FICHA_ID+"_"+k;
+
+}
+
+Storage.prototype.setItem = function(k,v){
+
+return oldSet.call(this,key(k),v);
+
+};
+
+Storage.prototype.getItem = function(k){
+
+return oldGet.call(this,key(k));
+
+};
+
+Storage.prototype.removeItem = function(k){
+
+return oldRemove.call(this,key(k));
+
+};
+
+})();
+
+<\/script>
+
+`;
+
+return html.replace("<head>","<head>"+script);
+
+}
+
+
+
 /* CRIAR FICHA */
 
 document.getElementById("createFicha").onclick = async ()=>{
 
 if(!user){
+
 alert("Faça login primeiro");
 return;
+
+}
+
+let nome = fichaNome.value.trim();
+
+if(!nome){
+
+alert("Digite um nome para a ficha");
+return;
+
 }
 
 let html="";
@@ -221,17 +332,21 @@ html = await res.text();
 
 }catch(e){}
 
+
+
 if(!html){
 
-html = `
+html=`
 <!doctype html>
 <html>
 <head>
 <meta charset="utf-8">
-<title>Ficha</title>
+<title>${nome}</title>
 </head>
 <body>
-<h1>Nova ficha</h1>
+
+<h1>${nome}</h1>
+
 </body>
 </html>
 `;
@@ -239,22 +354,27 @@ html = `
 }
 
 
+
 const docRef = await addDoc(collection(db,"fichas"),{
 
 owner:user.uid,
+nome:nome,
 html:html,
 createdAt:new Date().toISOString()
 
 });
 
 
-const blob = new Blob([html],{type:"text/html"});
+
+const htmlIsolado = injectStorageNamespace(html,docRef.id);
+
+const blob = new Blob([htmlIsolado],{type:"text/html"});
 const url = URL.createObjectURL(blob);
 
-/* ENVIA ID DA FICHA */
-window.open(url+"#"+docRef.id,"_blank");
+window.open(url,"_blank");
 
 };
+
 
 
 /* GERENCIAR */
@@ -262,16 +382,22 @@ window.open(url+"#"+docRef.id,"_blank");
 document.getElementById("manageFicha").onclick = ()=>{
 
 if(!user){
+
 alert("Faça login");
 return;
+
 }
 
 lista.style.display="block";
 
 const q = query(
+
 collection(db,"fichas"),
 where("owner","==",user.uid)
+
 );
+
+
 
 unsubscribe = onSnapshot(q,snap=>{
 
@@ -284,17 +410,27 @@ const data = docu.data();
 const div = document.createElement("div");
 div.className="ficha";
 
+const nome = document.createElement("span");
+nome.textContent = data.nome || "Ficha";
+
+const actions = document.createElement("div");
+actions.className="actions";
+
 const open = document.createElement("button");
 open.textContent="Abrir";
 
 open.onclick=()=>{
 
-const blob = new Blob([data.html],{type:"text/html"});
+const htmlIsolado = injectStorageNamespace(data.html,docu.id);
+
+const blob = new Blob([htmlIsolado],{type:"text/html"});
 const url = URL.createObjectURL(blob);
 
-window.open(url+"#"+docu.id,"_blank");
+window.open(url,"_blank");
 
 };
+
+
 
 const del = document.createElement("button");
 del.textContent="Apagar";
@@ -302,13 +438,20 @@ del.textContent="Apagar";
 del.onclick=async ()=>{
 
 if(confirm("Apagar ficha?")){
+
 await deleteDoc(doc(db,"fichas",docu.id));
+
 }
 
 };
 
-div.appendChild(open);
-div.appendChild(del);
+
+
+actions.appendChild(open);
+actions.appendChild(del);
+
+div.appendChild(nome);
+div.appendChild(actions);
 
 fichasDiv.appendChild(div);
 
@@ -319,5 +462,6 @@ fichasDiv.appendChild(div);
 };
 
 </script>
+
 </body>
 </html>

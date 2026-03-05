@@ -1,104 +1,64 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Fichas RPG — V2</title>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Fichas — Minimal</title>
   <style>
-    :root{--bg:#08080b;--card:#0f1113;--accent:#6ee7b7;--muted:#9aa0a6;--text:#e6eef3}
-    *{box-sizing:border-box;font-family:Inter, system-ui, Arial, sans-serif;margin:0}
-    body{background:linear-gradient(180deg,var(--bg),#0b0b0f);color:var(--text);padding:18px}
-    .wrap{max-width:980px;margin:0 auto}
-    .row{display:flex;gap:10px}
-    .col{flex:1}
-    .card{background:var(--card);padding:14px;border-radius:10px;border:1px solid #121214;margin-bottom:12px}
-    input,button,textarea,select{width:100%;padding:10px;border-radius:8px;background:#0b0b0d;border:1px solid #202124;color:var(--text)}
-    button.small{width:auto;padding:8px 12px}
-    .muted{color:var(--muted);font-size:0.9rem}
-    .fichas-list{display:grid;gap:8px;margin-top:8px}
-    .ficha-row{display:flex;justify-content:space-between;align-items:center;padding:8px;background:#0b0b0d;border-radius:8px}
-    .actions{display:flex;gap:8px}
-    .editor{display:grid;gap:8px}
-    .hint{font-size:0.85rem;color:var(--muted)}
-    .hidden{display:none}
-    .toolbar{display:flex;justify-content:space-between;align-items:center}
-    pre.notice{background:#070707;padding:8px;border-radius:8px;color:var(--muted);overflow:auto}
-    .toast{position:fixed;right:18px;bottom:18px;background:#0f1113;padding:10px;border-radius:8px;border:1px solid #222;color:var(--text)}
-    @media (max-width:700px){ .row{flex-direction:column} }
+    body{background:#07070a;color:#e6eef3;font-family:Inter,Arial;padding:18px;max-width:780px;margin:auto}
+    input,button{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #222;background:#0b0b0d;color:inherit}
+    .row{display:flex;gap:8px}
+    .small{width:auto;padding:8px 12px}
+    .card{background:#0f1113;padding:12px;border-radius:10px;margin-bottom:12px;border:1px solid #151516}
+    .muted{color:#9aa0a6;font-size:0.95rem}
+    .list{display:grid;gap:8px;margin-top:8px}
+    .item{display:flex;justify-content:space-between;align-items:center;padding:8px;background:#0b0b0d;border-radius:8px}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <div class="toolbar">
-        <div>
-          <h2 style="margin:0">Login</h2>
-          <div class="muted">Use email e senha</div>
-        </div>
-        <div id="userBadge" class="muted"></div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <strong>Entrar / Cadastrar</strong>
+        <div class="muted">Acesse suas fichas de qualquer lugar</div>
       </div>
-      <div style="margin-top:10px" class="row">
-        <input id="email" type="email" placeholder="email@example.com">
-        <input id="password" type="password" placeholder="senha" style="max-width:220px">
-      </div>
-      <div style="display:flex;gap:8px;margin-top:10px">
-        <button id="btnLogin" class="small">Entrar</button>
-        <button id="btnSignUp" class="small">Cadastrar</button>
-        <button id="btnReset" class="small">Esqueci</button>
-        <button id="btnLogout" class="small hidden">Sair</button>
-      </div>
-      <div style="margin-top:10px" id="status" class="muted">Desconectado</div>
+      <div id="userEmail" class="muted"></div>
     </div>
 
-    <div class="card">
-      <div class="toolbar">
-        <div>
-          <h3 style="margin:0">Painel Rápido</h3>
-          <div class="muted">CRIAR / GERENCIAR suas fichas</div>
-        </div>
-        <div class="actions">
-          <button id="btnCreate" class="small">CRIAR NOVA FICHA</button>
-          <button id="btnManage" class="small">GERENCIAR FICHAS CRIADAS</button>
-        </div>
-      </div>
+    <input id="email" type="email" placeholder="seu@email.com">
+    <input id="password" type="password" placeholder="senha">
 
-      <div id="manage" style="margin-top:12px" class="hidden">
-        <div class="muted">Suas fichas</div>
-        <div id="fichasList" class="fichas-list"></div>
-      </div>
-
-      <div id="editorPanel" class="hidden" style="margin-top:12px">
-        <div class="muted">Editor (salve para atualizar ficha)</div>
-        <div class="editor">
-          <input id="editTitle" placeholder="Título da ficha">
-          <textarea id="editHtml" style="min-height:220px;font-family:monospace"></textarea>
-          <div style="display:flex;gap:8px">
-            <button id="btnSaveEdit" class="small">Salvar</button>
-            <button id="btnOpenPreview" class="small">Abrir em nova aba</button>
-            <button id="btnCloseEditor" class="small">Fechar</button>
-          </div>
-          <div class="hint">Dica: clicando em "Abrir em nova aba" você vê a ficha como arquivo HTML.</div>
-        </div>
-      </div>
-
-      <div style="margin-top:12px" class="muted">Observação: coloque <code>ficha_base.html</code> na raiz do site (mesmo nível de <code>index.html</code>).</div>
+    <div style="display:flex;gap:8px;margin-top:6px">
+      <button id="btnLogin" class="small">Entrar</button>
+      <button id="btnSignUp" class="small">Cadastrar</button>
+      <button id="btnLogout" class="small" style="display:none">Sair</button>
     </div>
 
-    <div class="card">
-      <div class="muted">Debug / Info</div>
-      <pre id="debug" class="notice">Console leve — mensagens úteis aparecerão aqui.</pre>
+    <div id="status" class="muted" style="margin-top:8px">Não conectado</div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <strong>Painel</strong>
+      <div class="muted">Opções essenciais</div>
+    </div>
+
+    <button id="btnCreate" style="margin-top:8px">CRIAR NOVA FICHA</button>
+    <button id="btnManage" style="margin-top:8px">GERENCIAR FICHAS</button>
+
+    <div id="manageArea" class="card" style="margin-top:12px;display:none;padding:8px">
+      <div class="muted">Suas fichas</div>
+      <div id="fichasList" class="list"></div>
+      <div id="manageMsg" class="muted" style="margin-top:6px"></div>
     </div>
   </div>
 
-  <div id="toast" class="toast hidden"></div>
-
   <script type="module">
-    // imports (modular)
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js';
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.6.0/firebase-auth.js';
-    import { getFirestore, collection, addDoc, doc, updateDoc, query, where, onSnapshot, deleteDoc, getDoc } from 'https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js';
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js";
+    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-auth.js";
+    import { getFirestore, collection, addDoc, query, where, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js";
 
-    // --- CONFIG: substitua com suas chaves ---
+    // --- coloque suas chaves aqui ---
     const firebaseConfig = {
     apiKey: "AIzaSyBFm18hEqWFW6jgnu4CYp-E9_sL7YeC3wA",
     authDomain: "fichas-rpg00.firebaseapp.com",
@@ -107,174 +67,138 @@
     messagingSenderId: "569182509691",
     appId: "1:569182509691:web:13f5d9e242c309b0bda0de"
   };
-    // -----------------------------------------
+    // --------------------------------
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // DOM
     const emailEl = document.getElementById('email');
     const passwordEl = document.getElementById('password');
     const statusEl = document.getElementById('status');
-    const userBadge = document.getElementById('userBadge');
+    const userEmailEl = document.getElementById('userEmail');
     const btnLogout = document.getElementById('btnLogout');
     const btnCreate = document.getElementById('btnCreate');
     const btnManage = document.getElementById('btnManage');
-    const manageDiv = document.getElementById('manage');
+    const manageArea = document.getElementById('manageArea');
     const fichasList = document.getElementById('fichasList');
-    const debug = document.getElementById('debug');
-    const toast = document.getElementById('toast');
-
-    const editorPanel = document.getElementById('editorPanel');
-    const editTitle = document.getElementById('editTitle');
-    const editHtml = document.getElementById('editHtml');
-    const btnSaveEdit = document.getElementById('btnSaveEdit');
-    const btnOpenPreview = document.getElementById('btnOpenPreview');
-    const btnCloseEditor = document.getElementById('btnCloseEditor');
+    const manageMsg = document.getElementById('manageMsg');
 
     let currentUser = null;
     let unsubscribe = null;
-    let editingDocId = null; // id do doc em edição
 
-    function log(msg){ debug.textContent = msg + "\n" + debug.textContent; }
-    function showToast(t){ toast.textContent = t; toast.classList.remove('hidden'); setTimeout(()=> toast.classList.add('hidden'), 2500); }
+    function setStatus(t, err=false){
+      statusEl.textContent = t;
+      statusEl.style.color = err ? '#ff7b7b' : 'inherit';
+    }
 
-    function setStatus(msg, err=false){ statusEl.textContent = msg; statusEl.style.color = err ? '#ff7b7b' : 'white'; }
-
+    // auth handlers
     document.getElementById('btnSignUp').onclick = async ()=>{
-      try{ await createUserWithEmailAndPassword(auth, emailEl.value.trim(), passwordEl.value); showToast('Conta criada'); }
-      catch(e){ setStatus(e.message, true); log('SignUp: '+e.message); }
+      try{ await createUserWithEmailAndPassword(auth, emailEl.value.trim(), passwordEl.value); setStatus('Conta criada. Faça login.'); }
+      catch(e){ setStatus(e.message, true); }
     };
-
     document.getElementById('btnLogin').onclick = async ()=>{
       try{ await signInWithEmailAndPassword(auth, emailEl.value.trim(), passwordEl.value); }
-      catch(e){ setStatus(e.message, true); log('Login: '+e.message); }
+      catch(e){ setStatus(e.message, true); }
     };
-
-    document.getElementById('btnReset').onclick = async ()=>{
-      try{ await sendPasswordResetEmail(auth, emailEl.value.trim()); showToast('Email de recuperação enviado'); }
-      catch(e){ setStatus(e.message, true); log('Reset: '+e.message); }
-    };
-
     btnLogout.onclick = async ()=>{ await signOut(auth); };
 
     onAuthStateChanged(auth, user=>{
       currentUser = user;
       if(user){
-        userBadge.textContent = user.email;
-        document.getElementById('btnLogout').classList.remove('hidden');
+        userEmailEl.textContent = user.email;
+        btnLogout.style.display = 'inline-block';
         setStatus('Conectado: ' + user.email);
-        log('Auth: usuário logado');
       } else {
-        userBadge.textContent = '';
-        document.getElementById('btnLogout').classList.add('hidden');
-        setStatus('Desconectado');
-        manageDiv.classList.add('hidden');
-        editorPanel.classList.add('hidden');
-        if(unsubscribe) { unsubscribe(); unsubscribe = null; }
-        log('Auth: usuário deslogado');
-      }
-    });
-
-    // garante notas no HTML
-    function ensureNotes(html){ if(/id=\"notas\"/.test(html)) return html; return html.replace(/<\/body>/i, '\n<div style="padding:16px;background:#07070a;margin-top:12px;border-radius:8px"><h3>Anotações</h3><textarea id="notas" style="width:100%;min-height:160px"></textarea></div>\n</body>'); }
-
-    // ler template
-    async function loadTemplate(){
-      try{
-        const res = await fetch('./ficha_base.html');
-        if(res.ok) return await res.text();
-      }catch(e){ log('Template fetch falhou: '+e.message); }
-      // fallback
-      return '<!doctype html><html><head><meta charset="utf-8"><title>Ficha</title></head><body><h1>Nova Ficha</h1><p>Conteúdo base</p></body></html>';
-    }
-
-    // cria nova ficha e abre em nova aba (isolada)
-    btnCreate.addEventListener('click', async ()=>{
-      if(!currentUser){ alert('Faça login primeiro'); return; }
-      setStatus('Criando ficha...');
-      const htmlBase = ensureNotes(await loadTemplate());
-      try{
-        const docRef = await addDoc(collection(db,'fichas'), { name: 'Nova ficha', owner: currentUser.uid, html: htmlBase, createdAt: new Date().toISOString() });
-        setStatus('Ficha criada'); showToast('Ficha criada');
-        // open in new tab
-        const url = URL.createObjectURL(new Blob([htmlBase], {type:'text/html'}));
-        window.open(url,'_blank');
-        setTimeout(()=>URL.revokeObjectURL(url), 30*1000);
-        log('Criada ficha id=' + docRef.id);
-      }catch(e){ setStatus('Erro ao criar: '+e.message, true); log('Create error: '+e.message); }
-    });
-
-    // gerenciar fichas — cria apenas 1 listener e limpa antes de criar outro
-    btnManage.addEventListener('click', ()=>{
-      if(!currentUser){ alert('Faça login primeiro'); return; }
-      if(manageDiv.classList.contains('hidden')){
-        manageDiv.classList.remove('hidden');
-        // unsubscribe antigo, se houver
-        if(unsubscribe) { unsubscribe(); unsubscribe = null; }
-        const q = query(collection(db,'fichas'), where('owner','==', currentUser.uid));
-        unsubscribe = onSnapshot(q, snap => {
-          fichasList.innerHTML = '';
-          if(snap.empty){ fichasList.innerHTML = '<div class="muted">Nenhuma ficha encontrada</div>'; return; }
-          snap.forEach(docu=>{
-            const data = docu.data();
-            const row = document.createElement('div'); row.className = 'ficha-row';
-            const left = document.createElement('div'); left.innerHTML = '<strong>'+ (data.name || 'Sem título') +'</strong><div class="muted" style="font-size:0.85rem">'+ (data.createdAt || '') +'</div>';
-            const controls = document.createElement('div'); controls.style.display='flex'; controls.style.gap='8px';
-
-            const openBtn = document.createElement('button'); openBtn.textContent='Abrir'; openBtn.className='small';
-            openBtn.addEventListener('click', ()=>{
-              const url = URL.createObjectURL(new Blob([data.html || '<!doctype html><html><body>Vazio</body></html>'], {type:'text/html'}));
-              window.open(url,'_blank');
-              setTimeout(()=>URL.revokeObjectURL(url), 30*1000);
-            });
-
-            const editBtn = document.createElement('button'); editBtn.textContent='Editar'; editBtn.className='small';
-            editBtn.addEventListener('click', async ()=>{
-              editingDocId = docu.id;
-              editTitle.value = data.name || '';
-              editHtml.value = data.html || '';
-              editorPanel.classList.remove('hidden');
-              setStatus('Editando ficha: '+(data.name||docu.id));
-            });
-
-            const delBtn = document.createElement('button'); delBtn.textContent='Apagar'; delBtn.className='small';
-            delBtn.addEventListener('click', async ()=>{
-              if(!confirm('Apagar esta ficha?')) return;
-              try{ await deleteDoc(doc(db,'fichas',docu.id)); showToast('Ficha apagada'); }
-              catch(e){ setStatus('Erro ao apagar: '+e.message, true); log('Delete: '+e.message); }
-            });
-
-            controls.appendChild(openBtn); controls.appendChild(editBtn); controls.appendChild(delBtn);
-            row.appendChild(left); row.appendChild(controls);
-            fichasList.appendChild(row);
-          });
-        }, err=>{ setStatus('Erro ao carregar fichas: '+err.message, true); log('onSnapshot err: '+err.message); });
-      } else {
-        manageDiv.classList.add('hidden');
+        userEmailEl.textContent = '';
+        btnLogout.style.display = 'none';
+        setStatus('Não conectado');
+        // fechar manage e unsub if any
+        manageArea.style.display = 'none';
         if(unsubscribe){ unsubscribe(); unsubscribe = null; }
       }
     });
 
-    // salvar edição
-    btnSaveEdit.addEventListener('click', async ()=>{
-      if(!editingDocId){ alert('Nenhuma ficha selecionada para salvar'); return; }
+    // helper: ensure notes exist in template (like antes)
+    function ensureNotes(html){
+      if(/id="notas"/.test(html)) return html;
+      return html.replace(/<\/body>/i, '\n<div style="padding:12px;background:#07070a;margin-top:10px;border-radius:8px"><h4>Anotações</h4><textarea id="notas" style="width:100%;min-height:140px"></textarea></div>\n</body>');
+    }
+
+    // load template function (try root)
+    async function loadTemplate(){
       try{
-        await updateDoc(doc(db,'fichas',editingDocId), { name: editTitle.value || 'Sem título', html: editHtml.value || '', updatedAt: new Date().toISOString() });
-        showToast('Ficha atualizada');
-        editorPanel.classList.add('hidden'); editingDocId = null;
-      }catch(e){ setStatus('Erro ao salvar: '+e.message, true); log('Save edit: '+e.message); }
+        const res = await fetch('./ficha_base.html');
+        if(res.ok) return await res.text();
+      }catch(e){}
+      return '<!doctype html><html><head><meta charset="utf-8"><title>Ficha</title></head><body><h1>Nova Ficha</h1></body></html>';
+    }
+
+    // create ficha (always includes owner)
+    btnCreate.addEventListener('click', async ()=>{
+      if(!currentUser){ alert('Faça login primeiro'); return; }
+      setStatus('Criando ficha...');
+      const base = ensureNotes(await loadTemplate());
+      try{
+        const docRef = await addDoc(collection(db,'fichas'), { name: 'Nova ficha', owner: currentUser.uid, html: base, createdAt: new Date().toISOString() });
+        setStatus('Criada: ' + docRef.id);
+        // open isolated copy in new tab
+        const url = URL.createObjectURL(new Blob([base], {type:'text/html'}));
+        window.open(url,'_blank');
+        setTimeout(()=>URL.revokeObjectURL(url), 30*1000);
+      }catch(e){
+        // permission error -> give clear guidance
+        if(e && e.code && e.code.includes('permission')) setStatus('Sem permissão. Verifique regras do Firestore.', true);
+        else setStatus('Erro: ' + (e.message || e), true);
+      }
     });
 
-    btnOpenPreview.addEventListener('click', ()=>{
-      const html = editHtml.value || '<!doctype html><html><body>Vazio</body></html>';
-      const url = URL.createObjectURL(new Blob([html], {type:'text/html'}));
-      window.open(url,'_blank'); setTimeout(()=>URL.revokeObjectURL(url), 30*1000);
+    // manage: single listener only
+    btnManage.addEventListener('click', ()=>{
+      if(!currentUser){ alert('Faça login primeiro'); return; }
+      if(manageArea.style.display === 'block'){
+        manageArea.style.display = 'none';
+        if(unsubscribe){ unsubscribe(); unsubscribe = null; }
+        return;
+      }
+      manageArea.style.display = 'block';
+      fichasList.innerHTML = '';
+      manageMsg.textContent = 'Carregando...';
+      if(unsubscribe){ unsubscribe(); unsubscribe = null; }
+      const q = query(collection(db,'fichas'), where('owner','==', currentUser.uid));
+      unsubscribe = onSnapshot(q, snap=>{
+        fichasList.innerHTML = '';
+        manageMsg.textContent = '';
+        if(snap.empty){ manageMsg.textContent = 'Nenhuma ficha encontrada'; return; }
+        snap.forEach(docu=>{
+          const data = docu.data();
+          const item = document.createElement('div'); item.className='item';
+          const left = document.createElement('div'); left.innerHTML = '<strong>' + (data.name||'Sem título') + '</strong>';
+          const right = document.createElement('div');
+          right.style.display = 'flex'; right.style.gap = '6px';
+          const openBtn = document.createElement('button'); openBtn.textContent = 'Abrir';
+          openBtn.onclick = ()=>{
+            const blobUrl = URL.createObjectURL(new Blob([data.html || '<!doctype html><html><body>Vazio</body></html>'], {type:'text/html'}));
+            window.open(blobUrl,'_blank'); setTimeout(()=>URL.revokeObjectURL(blobUrl), 30*1000);
+          };
+          const delBtn = document.createElement('button'); delBtn.textContent = 'Apagar';
+          delBtn.onclick = async ()=>{
+            if(!confirm('Apagar esta ficha?')) return;
+            try{
+              await deleteDoc(doc(db,'fichas', docu.id));
+            }catch(e){
+              setStatus('Erro ao apagar: ' + (e.message || e), true);
+            }
+          };
+          right.appendChild(openBtn); right.appendChild(delBtn);
+          item.appendChild(left); item.appendChild(right);
+          fichasList.appendChild(item);
+        });
+      }, err=>{
+        manageMsg.textContent = 'Erro carregando fichas';
+        setStatus('Erro: ' + err.message, true);
+      });
     });
-
-    btnCloseEditor.addEventListener('click', ()=>{ editorPanel.classList.add('hidden'); editingDocId = null; });
-
   </script>
 </body>
 </html>

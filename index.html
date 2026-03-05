@@ -1,428 +1,313 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Fichas RPG — Painel</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Fichas RPG</title>
+
 <style>
-  :root{
-    --bg:#0b0b0f; --card:#0f1113; --muted:#9aa0a6; --accent:#6ee7b7; --text:#e6eef3;
-  }
-  *{box-sizing:border-box;font-family:Inter,system-ui,Arial;margin:0}
-  body{background:linear-gradient(180deg,var(--bg),#060607);color:var(--text);padding:18px}
-  .wrap{max-width:1000px;margin:0 auto}
-  .top{display:flex;gap:12px;align-items:center;justify-content:space-between;margin-bottom:12px}
-  .brand{font-weight:700;font-size:1.15rem}
-  .card{background:var(--card);padding:14px;border-radius:10px;border:1px solid #121214;margin-bottom:12px}
-  input,select,button,textarea{background:#0b0b0d;border:1px solid #202124;color:var(--text);padding:10px;border-radius:8px}
-  input,select{width:100%}
-  button.small{padding:8px 12px}
-  .row{display:flex;gap:8px}
-  .col{flex:1}
-  .muted{color:var(--muted);font-size:0.95rem}
-  .fichas-list{display:grid;gap:8px;margin-top:8px}
-  .ficha-row{display:flex;justify-content:space-between;align-items:center;padding:10px;background:#0b0b0d;border-radius:8px}
-  .ficha-title{font-weight:600}
-  .actions{display:flex;gap:6px}
-  .editor{margin-top:10px;display:grid;gap:8px}
-  textarea{min-height:220px;font-family:monospace;resize:vertical}
-  .hidden{display:none}
-  .toast{position:fixed;right:18px;bottom:18px;background:#0f1113;padding:10px;border-radius:8px;border:1px solid #222;color:var(--text)}
-  .search{display:flex;gap:8px;align-items:center}
-  @media (max-width:800px){ .top{flex-direction:column;align-items:flex-start} .row{flex-direction:column} }
+
+body{
+background:#0b0b0f;
+color:#e6eef3;
+font-family:Arial;
+padding:15px;
+max-width:900px;
+margin:auto;
+}
+
+.card{
+background:#111;
+padding:15px;
+border-radius:8px;
+margin-top:15px;
+}
+
+input,button{
+width:100%;
+padding:10px;
+margin-top:6px;
+background:#0f0f14;
+border:1px solid #333;
+color:white;
+border-radius:6px;
+}
+
+button{
+cursor:pointer;
+}
+
+.ficha{
+display:flex;
+justify-content:space-between;
+margin-top:8px;
+background:#0f0f14;
+padding:8px;
+border-radius:6px;
+}
+
+.actions button{
+width:auto;
+margin-left:4px;
+}
+
+.hidden{
+display:none;
+}
+
 </style>
 </head>
+
 <body>
-  <div class="wrap">
-    <div class="top">
-      <div class="brand">Fichas RPG — Painel</div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <div id="userEmail" class="muted"></div>
-        <button id="btnLogout" class="small hidden">Sair</button>
-      </div>
-    </div>
 
-    <!-- Auth card -->
-    <div id="authCard" class="card">
-      <div style="display:flex;gap:8px;align-items:center">
-        <input id="email" type="email" placeholder="email@example.com">
-        <input id="password" type="password" placeholder="senha" style="max-width:240px">
-        <button id="btnLogin" class="small">Entrar</button>
-        <button id="btnSignUp" class="small">Cadastrar</button>
-        <button id="btnReset" class="small">Esqueci</button>
-      </div>
-      <div id="authStatus" class="muted" style="margin-top:8px">Não conectado</div>
-    </div>
+<h2>Fichas RPG</h2>
 
-    <!-- Panel -->
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div>
-          <strong>Gerenciar fichas</strong>
-          <div class="muted">Crie, abra, edite e organize suas fichas</div>
-        </div>
-        <div style="display:flex;gap:8px">
-          <input id="newName" placeholder="Nome da nova ficha" style="width:260px">
-          <button id="btnCreate" class="small">CRIAR</button>
-          <button id="btnRefresh" class="small">Atualizar</button>
-        </div>
-      </div>
+<div class="card" id="loginCard">
 
-      <div style="margin-top:12px;display:flex;gap:12px;align-items:flex-start">
-        <div style="flex:1">
-          <div class="search" style="margin-bottom:6px">
-            <input id="searchBox" placeholder="Buscar fichas por nome..." />
-            <select id="sortBy" style="width:160px">
-              <option value="createdAt">Ordenar: mais recentes</option>
-              <option value="name">Ordenar: nome</option>
-            </select>
-          </div>
-          <div id="listArea" class="fichas-list"></div>
-        </div>
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Senha">
 
-        <div style="width:420px">
-          <div id="editorPanel" class="card hidden">
-            <div style="display:flex;justify-content:space-between;align-items:center">
-              <div><strong id="editorTitle">Editar ficha</strong><div id="editorMeta" class="muted" style="font-size:0.9rem"></div></div>
-              <div style="display:flex;gap:6px">
-                <button id="btnPreview" class="small">Preview</button>
-                <button id="btnCloseEditor" class="small">Fechar</button>
-              </div>
-            </div>
-            <div class="editor">
-              <input id="editName" placeholder="Título da ficha (nome)">
-              <textarea id="editHtml"></textarea>
-              <div style="display:flex;gap:8px;align-items:center">
-                <div id="autoSaveMsg" class="muted">Nenhuma alteração</div>
-                <div style="flex:1"></div>
-                <button id="btnDuplicate" class="small">Duplicar</button>
-                <button id="btnDelete" class="small">Apagar</button>
-                <button id="btnSave" class="small">Salvar</button>
-              </div>
-            </div>
-          </div>
+<button id="btnLogin">Entrar</button>
+<button id="btnSignUp">Cadastrar</button>
+<button id="btnReset">Esqueci senha</button>
 
-          <div id="helpCard" class="card">
-            <div class="muted">Dicas rápidas</div>
-            <ul class="muted">
-              <li>Clique <strong>CRIAR</strong> para gerar uma ficha a partir do template (ou deixe em branco para template simples).</li>
-              <li>Use <strong>Editar</strong> para modificar a ficha e o conteúdo será salvo automaticamente (debounce 1.5s) — ou clique Salvar.</li>
-              <li>Preview abre a ficha em nova aba com isolamento de armazenamento.</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
+<p id="status">Não conectado</p>
 
-    <div id="debug" class="muted card" style="display:none"></div>
-  </div>
+</div>
 
-  <div id="toast" class="toast hidden"></div>
+<div class="card hidden" id="painel">
+
+<p id="userEmail"></p>
+
+<button id="btnLogout">Sair</button>
+
+<hr>
+
+<input id="newName" placeholder="Nome da ficha">
+
+<button id="btnCreate">CRIAR NOVA FICHA</button>
+
+<h3>Minhas fichas</h3>
+
+<div id="fichasList"></div>
+
+</div>
 
 <script type="module">
-/* ========== imports ========== */
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, sendPasswordResetEmail, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, doc, updateDoc, deleteDoc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, deleteDoc, doc, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.6.0/firebase-firestore.js";
 
-/* ========== CONFIG - coloque suas chaves ========== */
 const firebaseConfig = {
-    apiKey: "AIzaSyBFm18hEqWFW6jgnu4CYp-E9_sL7YeC3wA",
-    authDomain: "fichas-rpg00.firebaseapp.com",
-    projectId: "fichas-rpg00",
-    storageBucket: "fichas-rpg00.firebasestorage.app",
-    messagingSenderId: "569182509691",
-    appId: "1:569182509691:web:13f5d9e242c309b0bda0de"
-  };
-/* ================================================ */
+apiKey: "AIzaSyBFm18hEqWFW6jgnu4CYp-E9_sL7YeC3wA",
+authDomain: "fichas-rpg00.firebaseapp.com",
+projectId: "fichas-rpg00",
+storageBucket: "fichas-rpg00.firebasestorage.app",
+messagingSenderId: "569182509691",
+appId: "1:569182509691:web:13f5d9e242c309b0bda0de"
+};
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-/* DOM */
-const userEmail = document.getElementById('userEmail');
-const btnLogout = document.getElementById('btnLogout');
-const authStatus = document.getElementById('authStatus');
+const email = document.getElementById("email");
+const password = document.getElementById("password");
+const status = document.getElementById("status");
 
-const emailEl = document.getElementById('email');
-const passwordEl = document.getElementById('password');
-const btnLogin = document.getElementById('btnLogin');
-const btnSignUp = document.getElementById('btnSignUp');
-const btnReset = document.getElementById('btnReset');
+const btnLogin = document.getElementById("btnLogin");
+const btnSignUp = document.getElementById("btnSignUp");
+const btnReset = document.getElementById("btnReset");
+const btnLogout = document.getElementById("btnLogout");
 
-const newName = document.getElementById('newName');
-const btnCreate = document.getElementById('btnCreate');
-const btnRefresh = document.getElementById('btnRefresh');
-const listArea = document.getElementById('listArea');
+const painel = document.getElementById("painel");
+const userEmail = document.getElementById("userEmail");
 
-const searchBox = document.getElementById('searchBox');
-const sortBy = document.getElementById('sortBy');
+const btnCreate = document.getElementById("btnCreate");
+const newName = document.getElementById("newName");
 
-const lista = document.getElementById('listArea');
-const fichasList = document.getElementById('listArea');
+const fichasList = document.getElementById("fichasList");
 
-const editorPanel = document.getElementById('editorPanel');
-const editName = document.getElementById('editName');
-const editHtml = document.getElementById('editHtml');
-const btnSave = document.getElementById('btnSave');
-const btnPreview = document.getElementById('btnPreview');
-const btnCloseEditor = document.getElementById('btnCloseEditor');
-const btnDuplicate = document.getElementById('btnDuplicate');
-const btnDelete = document.getElementById('btnDelete');
-const autoSaveMsg = document.getElementById('autoSaveMsg');
+let currentUser=null;
+let unsubscribe=null;
 
-const toast = document.getElementById('toast');
-const helpCard = document.getElementById('helpCard');
-
-let currentUser = null;
-let unsubscribe = null;
-let editingDocId = null;
-let autoSaveTimer = null;
-
-/* UI helpers */
-function showToast(t){
-  toast.textContent = t;
-  toast.classList.remove('hidden');
-  setTimeout(()=>toast.classList.add('hidden'),2400);
-}
-function setStatus(t,err=false){
-  authStatus.textContent = t;
-  authStatus.style.color = err? '#ff7b7b':'var(--muted)';
+function setStatus(msg,err=false){
+status.textContent=msg;
+status.style.color=err?"#ff6b6b":"white";
 }
 
-/* ========== AUTH ========== */
-btnSignUp.onclick = async ()=>{
-  try{ await createUserWithEmailAndPassword(auth, emailEl.value.trim(), passwordEl.value); showToast('Conta criada'); }
-  catch(e){ setStatus(e.message,true); }
-};
-btnLogin.onclick = async ()=>{
-  try{ await signInWithEmailAndPassword(auth, emailEl.value.trim(), passwordEl.value); }
-  catch(e){ setStatus(e.message,true); }
-};
-btnReset.onclick = async ()=>{
-  try{ await sendPasswordResetEmail(auth, emailEl.value.trim()); showToast('Email de recuperação enviado'); }
-  catch(e){ setStatus(e.message,true); }
-};
-btnLogout.onclick = async ()=>{ await signOut(auth); };
+/* AUTH */
 
-/* auth state */
-onAuthStateChanged(auth, user=>{
-  currentUser = user;
-  if(user){
-    userEmail.textContent = user.email;
-    btnLogout.classList.remove('hidden');
-    setStatus('Conectado: ' + user.email);
-  } else {
-    userEmail.textContent = '';
-    btnLogout.classList.add('hidden');
-    setStatus('Não conectado');
-    editorPanel.classList.add('hidden');
-    if(unsubscribe){ unsubscribe(); unsubscribe = null; }
-  }
+btnSignUp.onclick=async()=>{
+try{
+await createUserWithEmailAndPassword(auth,email.value,password.value);
+}catch(e){
+setStatus(e.message,true);
+}
+};
+
+btnLogin.onclick=async()=>{
+try{
+await signInWithEmailAndPassword(auth,email.value,password.value);
+}catch(e){
+setStatus(e.message,true);
+}
+};
+
+btnReset.onclick=async()=>{
+try{
+await sendPasswordResetEmail(auth,email.value);
+setStatus("Email enviado");
+}catch(e){
+setStatus(e.message,true);
+}
+};
+
+btnLogout.onclick=async()=>{
+await signOut(auth);
+};
+
+/* LOGIN STATE */
+
+onAuthStateChanged(auth,user=>{
+
+currentUser=user;
+
+if(user){
+
+painel.classList.remove("hidden");
+userEmail.textContent="Logado: "+user.email;
+setStatus("Conectado");
+
+loadFichas();
+
+}else{
+
+painel.classList.add("hidden");
+userEmail.textContent="";
+setStatus("Não conectado");
+
+if(unsubscribe)unsubscribe();
+
+}
+
 });
 
-/* ========== UTIL: injetar namespace para Storage ========== */
-function injectStorageNamespace(htmlStr, id){
-  const ns = `<script>
-  (function(){
-    try{
-      window.__FICHA_ID = ${JSON.stringify(id)};
-      const _set = Storage.prototype.setItem;
-      const _get = Storage.prototype.getItem;
-      const _remove = Storage.prototype.removeItem;
-      function pref(k){ return 'ficha:' + window.__FICHA_ID + ':' + k; }
-      Storage.prototype.setItem = function(k,v){ return _set.call(this, pref(k), v); };
-      Storage.prototype.getItem = function(k){ return _get.call(this, pref(k)); };
-      Storage.prototype.removeItem = function(k){ return _remove.call(this, pref(k)); };
-    }catch(e){ console.error('ns inject err',e); }
-  })();
-  <\/script>`;
-  if(/<head[^>]*>/i.test(htmlStr)){
-    return htmlStr.replace(/<head[^>]*>/i, match => match + ns);
-  } else {
-    return ns + htmlStr;
-  }
+/* CRIAR FICHA */
+
+btnCreate.onclick=async()=>{
+
+if(!currentUser){
+alert("Faça login");
+return;
 }
 
-/* ========== FEATURES ========== */
+let nome=newName.value||"Nova ficha";
 
-// create ficha
-btnCreate.onclick = async ()=>{
-  if(!currentUser){ alert('Faça login primeiro'); return; }
-  const name = (newName.value || 'Nova ficha').trim();
-  setStatus('Criando...');
-  let html = '';
-  try{ const res = await fetch('./ficha_base.html'); if(res.ok) html = await res.text(); }catch(e){}
-  if(!html) html = `<!doctype html><html><head><meta charset="utf-8"><title>${name}</title></head><body><h1>${name}</h1></body></html>`;
-  try{
-    const docRef = await addDoc(collection(db,'fichas'), { name, html, owner: currentUser.uid, createdAt: new Date().toISOString() });
-    setStatus('Ficha criada');
-    showToast('Ficha criada');
-    // open preview with storage isolation
-    const htmlIsolated = injectStorageNamespace(html, docRef.id);
-    const blob = new Blob([htmlIsolated], {type:'text/html'});
-    const url = URL.createObjectURL(blob);
-    window.open(url + '#' + docRef.id, '_blank');
-    setTimeout(()=>URL.revokeObjectURL(url), 30*1000);
-    // refresh list (onSnapshot handles it)
-  }catch(e){
-    setStatus('Erro ao criar: ' + (e.message||e), true);
-  }
-};
+let html="";
 
-// refresh
-btnRefresh.onclick = ()=>{ if(currentUser && unsubscribe){ unsubscribe(); unsubscribe = null; fetchAndListen(); } else fetchAndListen(); showToast('Atualizando...'); };
+try{
+const res=await fetch("./ficha_base.html");
+if(res.ok)html=await res.text();
+}catch(e){}
 
-// manage: subscribe once
-function fetchAndListen(){
-  if(!currentUser) return;
-  if(unsubscribe){ unsubscribe(); unsubscribe = null; }
-  const q = query(collection(db,'fichas'), where('owner','==', currentUser.uid));
-  unsubscribe = onSnapshot(q, snap=>{
-    renderList(snap);
-  }, err=>{
-    setStatus('Erro: ' + err.message, true);
-  });
+if(!html){
+
+html=`
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>${nome}</title>
+</head>
+<body>
+<h1>${nome}</h1>
+</body>
+</html>
+`;
+
 }
 
-/* filter & sort logic */
-function renderList(snapshot){
-  const arr = [];
-  snapshot.forEach(d=> arr.push({ id: d.id, ...d.data() }));
-  const term = (searchBox.value||'').toLowerCase();
-  let filtered = arr.filter(i => (i.name || i.nome || '').toLowerCase().includes(term));
-  if(sortBy.value === 'createdAt') filtered.sort((a,b)=> (b.createdAt || '').localeCompare(a.createdAt || ''));
-  else filtered.sort((a,b)=> ( (a.name||'').localeCompare(b.name||'') ));
-  const out = document.getElementById('listArea');
-  out.innerHTML = '';
-  if(filtered.length === 0){ out.innerHTML = '<div class="muted card">Nenhuma ficha encontrada</div>'; return; }
-  filtered.forEach(item => {
-    const row = document.createElement('div'); row.className = 'ficha-row';
-    const title = document.createElement('div'); title.innerHTML = `<div class="ficha-title">${escapeHtml(item.name||item.nome||'Sem título')}</div><div class="muted" style="font-size:0.85rem">${item.createdAt||''}</div>`;
-    const actions = document.createElement('div'); actions.className='actions';
-    const open = document.createElement('button'); open.textContent = 'Abrir';
-    open.onclick = ()=>{
-      const htmlIsolated = injectStorageNamespace(item.html, item.id);
-      const blob = new Blob([htmlIsolated], {type:'text/html'});
-      const url = URL.createObjectURL(blob);
-      window.open(url + '#' + item.id, '_blank');
-      setTimeout(()=>URL.revokeObjectURL(url), 30*1000);
-    };
-    const edit = document.createElement('button'); edit.textContent = 'Editar';
-    edit.onclick = ()=> openEditor(item);
-    const dup = document.createElement('button'); dup.textContent = 'Duplicar';
-    dup.onclick = async ()=>{
-      try{
-        const newDoc = await addDoc(collection(db,'fichas'), { name: (item.name||item.nome||'Ficha') + ' (cópia)', html: item.html || '', owner: currentUser.uid, createdAt: new Date().toISOString() });
-        showToast('Duplicada');
-      }catch(e){ setStatus('Erro duplicar: ' + e.message, true); }
-    };
-    const del = document.createElement('button'); del.textContent = 'Apagar';
-    del.onclick = async ()=>{
-      if(!confirm('Apagar esta ficha?')) return;
-      try{ await deleteDoc(doc(db,'fichas', item.id)); showToast('Apagada'); }
-      catch(e){ setStatus('Erro apagar: ' + e.message, true); }
-    };
-    actions.appendChild(open); actions.appendChild(edit); actions.appendChild(dup); actions.appendChild(del);
-    row.appendChild(title); row.appendChild(actions);
-    out.appendChild(row);
-  });
-}
-
-/* open editor for item */
-function openEditor(item){
-  editingDocId = item.id;
-  editorPanel.classList.remove('hidden');
-  editName.value = item.name || item.nome || 'Sem título';
-  editHtml.value = item.html || '';
-  document.getElementById('editorTitle').textContent = 'Editando: ' + (item.name||'');
-  document.getElementById('editorMeta').textContent = item.createdAt || '';
-  autoSaveMsg.textContent = 'Sincronização automática ativada';
-}
-
-/* editor autosave (debounced) */
-editHtml.addEventListener('input', ()=> scheduleAutoSave());
-editName.addEventListener('input', ()=> scheduleAutoSave());
-
-function scheduleAutoSave(){
-  autoSaveMsg.textContent = 'Salvando em breve...';
-  if(autoSaveTimer) clearTimeout(autoSaveTimer);
-  autoSaveTimer = setTimeout(async ()=>{
-    if(!editingDocId) return;
-    try{
-      await updateDoc(doc(db,'fichas', editingDocId), { name: editName.value || 'Sem título', html: editHtml.value || '', updatedAt: new Date().toISOString() });
-      autoSaveMsg.textContent = 'Salvo';
-      showToast('Salvo');
-    }catch(e){
-      setStatus('Erro ao salvar: ' + e.message, true);
-    }
-  }, 1500);
-}
-
-/* manual save / preview / close / duplicate / delete handlers */
-btnSave.onclick = async ()=>{
-  if(!editingDocId) return alert('Nenhuma ficha aberta');
-  try{
-    await updateDoc(doc(db,'fichas', editingDocId), { name: editName.value || 'Sem título', html: editHtml.value || '', updatedAt: new Date().toISOString() });
-    showToast('Salvo');
-  }catch(e){ setStatus('Erro ao salvar: ' + e.message, true); }
-};
-
-btnPreview.onclick = ()=>{
-  if(!editingDocId) return alert('Abra e edite uma ficha primeiro');
-  const htmlIsolated = injectStorageNamespace(editHtml.value || '', editingDocId);
-  const blob = new Blob([htmlIsolated], {type:'text/html'});
-  const url = URL.createObjectURL(blob);
-  window.open(url + '#' + editingDocId, '_blank');
-  setTimeout(()=>URL.revokeObjectURL(url), 30*1000);
-};
-
-btnCloseEditor.onclick = ()=>{
-  editingDocId = null;
-  editorPanel.classList.add('hidden');
-  autoSaveMsg.textContent = 'Nenhuma alteração';
-};
-
-/* duplicate current in editor */
-btnDuplicate.onclick = async ()=>{
-  if(!editingDocId) return;
-  try{
-    const newDoc = await addDoc(collection(db,'fichas'), { name: (editName.value||'Ficha') + ' (cópia)', html: editHtml.value || '', owner: currentUser.uid, createdAt: new Date().toISOString() });
-    showToast('Duplicada');
-  }catch(e){ setStatus('Erro duplicar: '+e.message, true); }
-};
-
-/* delete current in editor */
-btnDelete.onclick = async ()=>{
-  if(!editingDocId) return;
-  if(!confirm('Apagar esta ficha?')) return;
-  try{
-    await deleteDoc(doc(db,'fichas', editingDocId));
-    editorPanel.classList.add('hidden');
-    editingDocId = null;
-    showToast('Apagada');
-  }catch(e){ setStatus('Erro apagar: '+e.message, true); }
-};
-
-/* helpers */
-function escapeHtml(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-
-/* events */
-document.getElementById('manageFicha').addEventListener('click', ()=>{
-  if(!currentUser) return alert('Faça login primeiro');
-  fetchAndListen();
+const docRef=await addDoc(collection(db,"fichas"),{
+name:nome,
+html:html,
+owner:currentUser.uid,
+createdAt:new Date().toISOString()
 });
 
-/* live search/sort */
-searchBox.addEventListener('input', ()=>{ if(unsubscribe) { /* re-render from last snapshot by refetch */ fetchAndListen(); } });
-sortBy.addEventListener('change', ()=>{ if(unsubscribe) fetchAndListen(); });
+openFicha(html,docRef.id);
 
-/* initial fetch if already logged */
-onAuthStateChanged(auth, user=>{
-  if(user) fetchAndListen();
+newName.value="";
+
+};
+
+/* ABRIR FICHA */
+
+function openFicha(html,id){
+
+const blob=new Blob([html],{type:"text/html"});
+const url=URL.createObjectURL(blob);
+
+window.open(url,"_blank");
+
+}
+
+/* LISTAR FICHAS */
+
+function loadFichas(){
+
+const q=query(
+collection(db,"fichas"),
+where("owner","==",currentUser.uid)
+);
+
+unsubscribe=onSnapshot(q,snap=>{
+
+fichasList.innerHTML="";
+
+snap.forEach(docu=>{
+
+const data=docu.data();
+
+const div=document.createElement("div");
+div.className="ficha";
+
+const title=document.createElement("span");
+title.textContent=data.name||"Sem nome";
+
+const actions=document.createElement("div");
+actions.className="actions";
+
+const open=document.createElement("button");
+open.textContent="Abrir";
+open.onclick=()=>openFicha(data.html,docu.id);
+
+const del=document.createElement("button");
+del.textContent="Apagar";
+del.onclick=async()=>{
+
+if(confirm("Apagar ficha?")){
+await deleteDoc(doc(db,"fichas",docu.id));
+}
+
+};
+
+actions.appendChild(open);
+actions.appendChild(del);
+
+div.appendChild(title);
+div.appendChild(actions);
+
+fichasList.appendChild(div);
+
 });
+
+});
+
+}
 
 </script>
+
 </body>
 </html>
